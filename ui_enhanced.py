@@ -1,7 +1,10 @@
 import tkinter as tk
-from tkinter import ttk, Menu, scrolledtext
+from tkinter import ttk, Menu, scrolledtext, messagebox
 import pyperclip
 import threading
+import webbrowser
+import json
+import urllib.request
 from rewriter import rewrite_text_with_gpt
 from settings import show_settings_window, load_settings
 
@@ -10,6 +13,142 @@ selected_alternative = 0
 alternatives = []
 selected_model = None
 is_rewriting = False
+
+# Application metadata
+APP_VERSION = "1.0.0"
+APP_NAME = "Lexia"
+AUTHOR = "Muhammad Jawad Bashir"
+GITHUB_URL = "https://github.com/stardust-96/lexia"
+RELEASE_API_URL = "https://api.github.com/repos/stardust-96/lexia/releases/latest"
+
+def show_about_dialog(parent):
+    """Show the About dialog with application information."""
+    about_window = tk.Toplevel(parent)
+    about_window.title(f"About {APP_NAME}")
+    about_window.geometry("420x500")
+    about_window.resizable(False, False)
+    about_window.transient(parent)
+    about_window.grab_set()
+    
+    # Center the window
+    about_window.update_idletasks()
+    x = (about_window.winfo_screenwidth() // 2) - (420 // 2)
+    y = (about_window.winfo_screenheight() // 2) - (500 // 2)
+    about_window.geometry(f"420x500+{x}+{y}")
+    
+    # Main container with padding
+    main_frame = tk.Frame(about_window, bg="white")
+    main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    
+    # App icon/logo area
+    logo_frame = tk.Frame(main_frame, bg="white")
+    logo_frame.pack(fill=tk.X, pady=(10, 20))
+    
+    # App name with large font
+    tk.Label(logo_frame, text="✨ " + APP_NAME, font=("Arial", 26, "bold"), 
+             bg="white", fg="#2c3e50").pack(pady=(0, 5))
+    tk.Label(logo_frame, text="Intelligent Text Rewriting Assistant", 
+             font=("Arial", 11), bg="white", fg="#7f8c8d").pack()
+    
+    # Version and author info
+    info_frame = tk.Frame(main_frame, bg="white")
+    info_frame.pack(fill=tk.X, pady=(0, 15))
+    
+    tk.Label(info_frame, text=f"Version {APP_VERSION}", 
+             font=("Arial", 12, "bold"), bg="white", fg="#34495e").pack(pady=2)
+    
+    tk.Label(info_frame, text=f"Created by {AUTHOR}", 
+             font=("Arial", 10), bg="white", fg="#34495e").pack(pady=2)
+    
+    # Description with better spacing
+    desc_frame = tk.Frame(main_frame, bg="white")
+    desc_frame.pack(fill=tk.X, padx=20, pady=(0, 15))
+    
+    desc_text = ("A powerful desktop application that provides intelligent "
+                "text rewriting with customizable styles and multiple AI models.")
+    tk.Label(desc_frame, text=desc_text, font=("Arial", 10), bg="white", 
+             fg="#555", wraplength=350, justify=tk.CENTER).pack()
+    
+    # Features with improved layout
+    features_frame = tk.LabelFrame(main_frame, text=" Key Features ", font=("Arial", 11, "bold"),
+                                  bg="white", fg="#2c3e50", relief=tk.GROOVE, bd=2)
+    features_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+    
+    # Inner frame for padding
+    inner_features = tk.Frame(features_frame, bg="white")
+    inner_features.pack(fill=tk.BOTH, padx=15, pady=10)
+    
+    features = [
+        "• Multiple AI models (GPT-4, Llama-4-Scout)",
+        "• 6 preset styles + custom instructions",
+        "• Global hotkey support (Ctrl+Shift+R)",
+        "• Multiple rewrite alternatives",
+        "• One-click copy and close"
+    ]
+    
+    for feature in features:
+        tk.Label(inner_features, text=feature, font=("Arial", 10), 
+                bg="white", fg="#555", anchor=tk.W, justify=tk.LEFT).pack(fill=tk.X, pady=2)
+    
+    # Buttons frame with spacing
+    button_frame = tk.Frame(main_frame, bg="white")
+    button_frame.pack(fill=tk.X, pady=(10, 0))
+    
+    # Check for updates button
+    def check_updates():
+        update_btn.config(text="Checking...", state="disabled")
+        
+        def check():
+            try:
+                # Simple version check against GitHub releases
+                with urllib.request.urlopen(RELEASE_API_URL, timeout=5) as response:
+                    data = json.loads(response.read())
+                    latest_version = data.get("tag_name", "").lstrip("v")
+                    
+                    if latest_version and latest_version != APP_VERSION:
+                        result = messagebox.askyesno(
+                            "Update Available",
+                            f"A new version ({latest_version}) is available!\n\n"
+                            f"Current version: {APP_VERSION}\n\n"
+                            "Would you like to visit the download page?",
+                            parent=about_window
+                        )
+                        if result:
+                            webbrowser.open(GITHUB_URL + "/releases/latest")
+                    else:
+                        messagebox.showinfo(
+                            "No Updates",
+                            f"{APP_NAME} is up to date!",
+                            parent=about_window
+                        )
+            except Exception as e:
+                messagebox.showerror(
+                    "Update Check Failed",
+                    f"Could not check for updates:\n{str(e)}",
+                    parent=about_window
+                )
+            finally:
+                update_btn.config(text="Check for Updates", state="normal")
+        
+        # Run in thread to avoid blocking UI
+        threading.Thread(target=check, daemon=True).start()
+    
+    update_btn = tk.Button(button_frame, text="Check for Updates", 
+                          command=check_updates, bg="#3498db", fg="white",
+                          font=("Arial", 9), padx=15, pady=5, cursor="hand2")
+    update_btn.pack(pady=5)
+    
+    # GitHub link
+    github_link = tk.Label(button_frame, text="View on GitHub", 
+                          font=("Arial", 9, "underline"), bg="white", 
+                          fg="#3498db", cursor="hand2")
+    github_link.pack(pady=5)
+    github_link.bind("<Button-1>", lambda e: webbrowser.open(GITHUB_URL))
+    
+    # Close button
+    tk.Button(button_frame, text="Close", command=about_window.destroy,
+             bg="#95a5a6", fg="white", font=("Arial", 9), 
+             padx=30, pady=5).pack(pady=10)
 
 def show_popup(original: str):
     def start_rewrite():
@@ -149,6 +288,7 @@ def show_popup(original: str):
     # Help menu
     help_menu = Menu(menubar, tearoff=0)
     menubar.add_cascade(label="Help", menu=help_menu)
+    help_menu.add_command(label="About", command=lambda: show_about_dialog(popup))
     
     settings = load_settings()
     model_display = "GPT-4 (OpenAI)" if settings['model'] == "gpt-4" else "Llama-4-Scout (Groq)"
@@ -256,6 +396,7 @@ def show_popup(original: str):
                            state='disabled', bg="#27ae60", fg="white", font=("Arial", 11, "bold"),
                            relief="raised", bd=2, padx=20, pady=8)
     copy_button.pack(side=tk.LEFT, padx=5)
+
 
     cancel_button = tk.Button(button_frame, text="❌ Cancel", command=popup.destroy, 
                              bg="#e74c3c", fg="white", font=("Arial", 11, "bold"),

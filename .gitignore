@@ -89,3 +89,6 @@ history.jsonl     # History file (if re-added)
 # Temporary files
 *.tmp
 *.temp
+
+# Claude Code context
+CLAUDE.md
