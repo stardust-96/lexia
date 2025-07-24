@@ -115,7 +115,7 @@ def show_popup(original: str):
 
     # Create enhanced styled window
     popup = tk.Tk()
-    popup.title("AI Text Rewriter - Enhanced Edition")
+    popup.title("Lexia - Text Enhancement")
     popup.geometry("900x800")
     popup.resizable(False, False)
     popup.configure(bg="#f5f5f5")

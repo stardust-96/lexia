@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AI Text Rewriter - Main Application Entry Point
+Lexia - Main Application Entry Point
 
 A desktop application that provides intelligent text rewriting with customizable
 styles and multiple AI models. Works globally across all applications using
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         model_name = settings.get('model', 'llama-4-scout')
         display_name = "GPT-4 (OpenAI)" if model_name == "gpt-4" else "Llama-4-Scout (Groq)"
         
-        print("AI Text Rewriter running...")
+        print("Lexia running...")
         print(f"Press {hotkey.upper()} to rewrite selected text")
         print(f"Using model: {display_name}")
         

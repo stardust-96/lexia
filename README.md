@@ -1,4 +1,4 @@
-# AI Text Rewriter
+# Lexia
 
 A powerful desktop application that provides intelligent text rewriting with customizable styles and AI models. Similar to Grammarly but with more flexibility and AI model options.
 
@@ -38,8 +38,8 @@ A powerful desktop application that provides intelligent text rewriting with cus
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-text-rewriter.git
-   cd ai-text-rewriter
+   git clone https://github.com/stardust-96/lexia.git
+   cd lexia
    ```
 
 2. **Install dependencies**
@@ -119,7 +119,7 @@ Access settings through the popup menu: **File → Settings**
 ## Project Structure
 
 ```
-ai-text-rewriter/
+lexia/
 ├── main.py              # Application entry point
 ├── ui_enhanced.py       # Main user interface
 ├── rewriter.py         # AI model integration
@@ -199,4 +199,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by Muhammad Jawad Bashir**
 
-For issues, suggestions, or contributions, please visit the [GitHub repository](https://github.com/yourusername/ai-text-rewriter).
+**Lexia** - Your intelligent text rewriting assistant
+
+For issues, suggestions, or contributions, please visit the [GitHub repository](https://github.com/stardust-96/lexia).
