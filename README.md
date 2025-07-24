@@ -197,6 +197,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by [Your Name]**
+**Made with ❤️ by Muhammad Jawad Bashir**
 
 For issues, suggestions, or contributions, please visit the [GitHub repository](https://github.com/yourusername/ai-text-rewriter).
