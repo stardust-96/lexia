@@ -1,13 +1,29 @@
 from openai import OpenAI
-from config import OPENAI_API_KEY, GROQ_API_KEY
-from settings import load_settings
+from settings import get_api_keys, load_settings
 
-# Initialize clients
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-groq_client = OpenAI(
-    api_key=GROQ_API_KEY,
-    base_url="https://api.groq.com/openai/v1"
-)
+def get_clients():
+    """Get API clients based on current settings"""
+    keys = get_api_keys()
+    
+    openai_client = None
+    groq_client = None
+    
+    if keys["openai"]:
+        try:
+            openai_client = OpenAI(api_key=keys["openai"])
+        except Exception as e:
+            print(f"Error initializing OpenAI client: {e}")
+    
+    if keys["groq"]:
+        try:
+            groq_client = OpenAI(
+                api_key=keys["groq"],
+                base_url="https://api.groq.com/openai/v1"
+            )
+        except Exception as e:
+            print(f"Error initializing Groq client: {e}")
+    
+    return openai_client, groq_client
 
 def rewrite_text_with_gpt(original_text: str, tone: str = "Neutral", num_alternatives: int = None, model_override: str = None) -> list[str]:
     settings = load_settings()
@@ -15,8 +31,18 @@ def rewrite_text_with_gpt(original_text: str, tone: str = "Neutral", num_alterna
         num_alternatives = settings.get("num_alternatives", 3)
     model = model_override if model_override else settings.get("model", "gpt-4")
     temperature = settings.get("temperature", 0.7)
+    
     if not original_text.strip():
         return ["No text provided."]
+
+    # Get API clients
+    openai_client, groq_client = get_clients()
+    
+    # Check if we have the required client for the selected model
+    if model == "llama-4-scout" and not groq_client:
+        return ["Error: Groq API key not configured. Please add your Groq API key in Settings → API Keys."]
+    elif model != "llama-4-scout" and not openai_client:
+        return ["Error: OpenAI API key not configured. Please add your OpenAI API key in Settings → API Keys."]
 
     try:
         # Determine if it's a preset tone or custom instruction
