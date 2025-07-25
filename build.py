@@ -104,13 +104,19 @@ def create_release_package():
         f.write("""LEXIA - Installation Guide
 ==========================
 
+SUPER EASY SETUP - NO CONFIGURATION NEEDED!
+
 1. Extract all files to a folder of your choice
-2. Copy config.example.py to config.py
-3. Edit config.py and add your API keys:
-   - OPENAI_API_KEY = "your-openai-key"
-   - GROQ_API_KEY = "your-groq-key"
-4. Run Lexia.exe
-5. Press Ctrl+Shift+R to use the text rewriter
+2. Run Lexia.exe
+3. First-time setup wizard opens automatically
+4. Enter your API keys in the GUI (no file editing!)
+5. Click Save and you're done!
+
+HOW TO USE:
+- Select any text in any application
+- Press Ctrl+Shift+R
+- Choose your rewriting style
+- Click Rewrite!
 
 For more information, see README.md
 
@@ -122,8 +128,9 @@ Enjoy using Lexia!
     # Create ZIP file
     try:
         import zipfile
+        from version import __version__
         
-        zip_path = f'Lexia-v1.1.0-Windows.zip'
+        zip_path = f'Lexia-v{__version__}-Windows.zip'
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for file_path in release_dir.rglob('*'):
                 if file_path.is_file():
