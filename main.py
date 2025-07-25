@@ -18,7 +18,7 @@ import time
 import os
 import sys
 from ui_enhanced import show_popup
-from settings import load_settings
+from settings import load_settings, get_api_keys, show_settings_window
 
 last_hotkey_time = 0
 window_open = False
@@ -86,6 +86,30 @@ if __name__ == "__main__":
             f.write(str(os.getpid()))
         
         settings = load_settings()
+        
+        # Check for API keys on first run
+        keys = get_api_keys()
+        if not keys["openai"] and not keys["groq"]:
+            print("Welcome to Lexia!")
+            print("First-time setup: Please configure your API keys...")
+            print("Opening settings window...")
+            
+            # Show settings window for first-time setup
+            import tkinter as tk
+            root = tk.Tk()
+            root.withdraw()  # Hide the root window
+            show_settings_window(root)
+            root.destroy()
+            
+            # Reload settings after setup
+            settings = load_settings()
+            keys = get_api_keys()
+            
+            # Check again if keys were added
+            if not keys["openai"] and not keys["groq"]:
+                print("No API keys configured. Exiting...")
+                sys.exit(1)
+        
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         
         model_name = settings.get('model', 'llama-4-scout')
@@ -94,6 +118,12 @@ if __name__ == "__main__":
         print("Lexia running...")
         print(f"Press {hotkey.upper()} to rewrite selected text")
         print(f"Using model: {display_name}")
+        
+        # Show which API keys are configured
+        if keys["openai"]:
+            print("✓ OpenAI API key configured")
+        if keys["groq"]:
+            print("✓ Groq API key configured")
         
         keyboard.add_hotkey(hotkey, handle_hotkey)
         keyboard.wait()

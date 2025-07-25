@@ -1,13 +1,16 @@
-# config.py
-# API Configuration File
+# DEPRECATED: This file is no longer used for API key storage
+# API keys are now managed through the Settings UI
 # 
-# IMPORTANT: Add your actual API keys here before running the application
-# This file should be added to .gitignore to keep keys private
+# To configure API keys:
+# 1. Run Lexia
+# 2. Go to File → Settings → API Keys tab
+# 3. Enter your API keys and save
+#
+# Keys are stored securely in settings.json with basic encoding
 
-# OpenAI API Key (for GPT-4)
-# Get your key from: https://platform.openai.com/api-keys
-OPENAI_API_KEY = "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"
+from settings import get_api_keys
 
-# Groq API Key (for Llama-4-Scout)  
-# Get your key from: https://console.groq.com/
-GROQ_API_KEY = "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"
+# Backward compatibility - loads keys from new settings system
+_keys = get_api_keys()
+OPENAI_API_KEY = _keys.get("openai", "")
+GROQ_API_KEY = _keys.get("groq", "")
