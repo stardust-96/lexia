@@ -1,0 +1,83 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pillow
+        
+    - name: Create application icon
+      run: python create_icon.py
+      
+    - name: Build executable
+      run: python build.py
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: lexia-windows
+        path: |
+          dist/Lexia.exe
+          release/
+          Lexia-v*.zip
+        retention-days: 30
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          Lexia-v*.zip
+          dist/Lexia.exe
+        body: |
+          ## Lexia Release ${{ github.ref_name }}
+          
+          ### What's New
+          - Automated release build
+          - Windows executable included
+          - Ready-to-use installation package
+          
+          ### Installation
+          1. Download `Lexia-v*-Windows.zip`
+          2. Extract to a folder
+          3. Follow `INSTALLATION.txt` instructions
+          4. Run `Lexia.exe`
+          
+          ### Requirements
+          - Windows 10/11
+          - OpenAI API Key and/or Groq API Key
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-info:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Show build info
+      run: |
+        echo "🚀 Building Lexia release"
+        echo "📅 Date: $(date)"
+        echo "🏷️  Tag: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
