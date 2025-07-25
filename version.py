@@ -2,7 +2,7 @@
 Version management for Lexia
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __build__ = "20250125"
 __author__ = "Muhammad Jawad Bashir"
 
