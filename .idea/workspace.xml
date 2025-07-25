@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c0d95a30-62e1-4d98-bdbe-a55f563ccea1" name="Changes" comment="Added About Me.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rewriter.py" beforeDir="false" afterPath="$PROJECT_DIR$/rewriter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
-    </list>
+    <list default="true" id="c0d95a30-62e1-4d98-bdbe-a55f563ccea1" name="Changes" comment="Added About Me." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -98,7 +92,7 @@
       <option name="presentableId" value="Default" />
       <updated>1753376941556</updated>
       <workItem from="1753376943945" duration="18521000" />
-      <workItem from="1753398751266" duration="5502000" />
+      <workItem from="1753398751266" duration="6251000" />
     </task>
     <task id="LOCAL-00001" summary="Added About Me.">
       <option name="closed" value="true" />
