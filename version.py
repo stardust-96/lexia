@@ -2,8 +2,8 @@
 Version management for Lexia
 """
 
-__version__ = "1.0.0"
-__build__ = "20250124"
+__version__ = "1.1.0"
+__build__ = "20250125"
 __author__ = "Muhammad Jawad Bashir"
 
 # Version info for UI

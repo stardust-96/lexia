@@ -123,7 +123,7 @@ Enjoy using Lexia!
     try:
         import zipfile
         
-        zip_path = f'Lexia-v1.0.0-Windows.zip'
+        zip_path = f'Lexia-v1.1.0-Windows.zip'
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for file_path in release_dir.rglob('*'):
                 if file_path.is_file():
