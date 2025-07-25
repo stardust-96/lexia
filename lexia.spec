@@ -20,7 +20,10 @@ a = Analysis(
         'psutil',
         'webbrowser',
         'json',
-        'urllib.request'
+        'urllib.request',
+        'base64',
+        'os',
+        'sys'
     ],
     hookspath=[],
     hooksconfig={},

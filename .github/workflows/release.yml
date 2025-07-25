@@ -49,24 +49,37 @@ jobs:
           Lexia-v*.zip
           dist/Lexia.exe
         body: |
-          ## Lexia Release ${{ github.ref_name }}
+          ## 🎉 Lexia Release ${{ github.ref_name }}
           
-          ### What's New
-          - Automated release build
-          - Windows executable included
-          - Ready-to-use installation package
+          ### ✨ What's New
+          - **GUI-based API Key Management** - No more config.py editing!
+          - **First-time Setup Wizard** - Automatic setup on first run
+          - **Professional Settings UI** - Tabbed interface with secure key storage
+          - **Zero-Setup Experience** - Download → Run → Enter Keys → Done!
+          - **Improved User Experience** - Perfect for mainstream distribution
           
-          ### Installation
-          1. Download `Lexia-v*-Windows.zip`
-          2. Extract to a folder
-          3. Follow `INSTALLATION.txt` instructions
-          4. Run `Lexia.exe`
+          ### 📦 Installation (Super Easy!)
+          1. Download `Lexia-${{ github.ref_name }}-Windows.zip`
+          2. Extract to any folder
+          3. Run `Lexia.exe`
+          4. Enter your API keys in the setup wizard
+          5. Start rewriting text with `Ctrl+Shift+R`!
           
-          ### Requirements
+          ### 🔧 Requirements
           - Windows 10/11
-          - OpenAI API Key and/or Groq API Key
+          - OpenAI API Key and/or Groq API Key (entered through GUI)
+          - Internet connection for AI processing
           
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v1.0.0...${{ github.ref_name }}
+          ### 🚀 Features
+          - **Global Hotkey**: Works across all applications
+          - **Multiple AI Models**: GPT-4 (OpenAI) + Llama-4-Scout (Groq)
+          - **6 Preset Styles** + Custom instructions
+          - **3 Alternative Rewrites** per request
+          - **Professional About Dialog** with update checking
+          
+          **Made with ❤️ by Muhammad Jawad Bashir**
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}
         draft: false
         prerelease: false
       env:
