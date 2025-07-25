@@ -248,6 +248,14 @@ lexia/
    - Restart Lexia.exe to re-trigger setup wizard
    - Manually open settings: **File → Settings → API Keys**
 
+6. **🛡️ Antivirus/Windows Defender warnings**
+   - **This is a false positive** - very common with PyInstaller apps
+   - **Safe to ignore**: The executable is clean (check source code)
+   - **Chrome/Edge**: Click "Keep" when downloading
+   - **Windows Defender**: Click "More info" → "Run anyway"
+   - **Add exclusion**: Add Lexia folder to antivirus exclusions
+   - **Why this happens**: Unsigned executables trigger heuristic detection
+
 ### **🆘 Getting Help**
 
 - Check console output for error messages
