@@ -8,13 +8,18 @@ A powerful desktop application that provides intelligent text rewriting with cus
 
 ## 🚀 Quick Start
 
-### **Option 1: Download Executable (Recommended)**
+### **🎯 Super Easy Installation (Recommended)**
 1. Go to [Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. Download `Lexia-v*-Windows.zip`
-3. Extract and follow `INSTALLATION.txt`
-4. Run `Lexia.exe` - No Python installation needed!
+2. Download `Lexia-v1.1.0-Windows.zip`
+3. Extract to any folder
+4. Run `Lexia.exe`
+5. **First-time setup wizard opens automatically**
+6. Enter your API keys in the GUI (no file editing!)
+7. Start rewriting with `Ctrl+Shift+R`!
 
-### **Option 2: Run from Source**
+**✨ No Python installation, no config files, no technical setup required!**
+
+### **🛠️ Developer Option: Run from Source**
 ```bash
 git clone https://github.com/stardust-96/lexia.git
 cd lexia
@@ -37,11 +42,15 @@ python main.py
   - Purpose: *"more persuasive"*, *"for social media"*, *"for children"*
 
 ### ⚡ User Experience
-- **Global Hotkey**: Works across all applications (default: `Ctrl+Shift+R`)
-- **Instant Access**: Select text anywhere and press hotkey
-- **Modern UI**: Clean interface with dynamic text sizing
-- **One-Click Copy**: Copy and close with single button
-- **Auto-Updates**: Built-in update checker
+- **🎯 Zero-Setup Installation**: Download → Run → Enter API Keys → Done!
+- **🔧 First-Time Setup Wizard**: Automatic configuration on first launch
+- **⚙️ GUI-Based Settings**: Professional tabbed interface for all settings
+- **🔑 Secure API Key Management**: No config file editing required
+- **🌐 Global Hotkey**: Works across all applications (default: `Ctrl+Shift+R`)
+- **⚡ Instant Access**: Select text anywhere and press hotkey
+- **🎨 Modern UI**: Clean interface with dynamic text sizing
+- **📋 One-Click Copy**: Copy and close with single button
+- **🔄 Auto-Updates**: Built-in update checker
 
 ### ⚙️ Customization
 - **Hotkey Configuration**: Set your preferred keyboard shortcut
@@ -51,13 +60,15 @@ python main.py
 
 ## 🛠️ Installation
 
-### **Windows Executable (Easy)**
+### **🎯 Windows Executable (Recommended - Super Easy!)**
 1. **Download** the latest release from [GitHub Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. **Extract** `Lexia-v*-Windows.zip` to a folder
-3. **Configure** API keys in `config.py` (copy from `config.example.py`)
-4. **Run** `Lexia.exe`
+2. **Extract** `Lexia-v1.1.0-Windows.zip` to any folder
+3. **Run** `Lexia.exe`
+4. **🎨 First-time setup opens automatically**
+5. **Enter your API keys** in the professional GUI interface
+6. **Done!** No config files, no command line needed
 
-### **From Source (Developers)**
+### **💻 From Source (Developers)**
 
 #### Prerequisites
 - Python 3.7+
@@ -75,46 +86,57 @@ python main.py
    pip install -r requirements.txt
    ```
 
-3. **Configure API Keys**
+3. **Run with GUI Setup**
    ```bash
-   cp config.example.py config.py
-   # Edit config.py with your API keys
+   python main.py
+   # First-time setup wizard opens automatically
+   # Enter API keys through the GUI interface
    ```
 
-### Getting API Keys
+### **🔑 Getting API Keys (Done Through GUI)**
 
-#### OpenAI API Key
-1. Visit [OpenAI API](https://platform.openai.com/api-keys)
-2. Create an account or sign in
-3. Generate a new API key
+Lexia's setup wizard will guide you, but here's where to get keys:
+
+#### **OpenAI API Key** (for GPT-4)
+1. Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
+2. Create account or sign in
+3. Generate new API key
 4. Add billing information if required
 
-#### Groq API Key
-1. Visit [Groq Console](https://console.groq.com/)
-2. Create an account or sign in
-3. Generate a new API key
-4. Copy the key to your config
+#### **Groq API Key** (for Llama-4-Scout) 
+1. Visit [Groq Console](https://console.groq.com/keys)
+2. Create account or sign in  
+3. Generate new API key
+4. Copy the key (it's free!)
+
+**💡 You only need ONE API key to use Lexia!** The setup wizard makes it easy to configure either or both.
 
 ## 📖 Usage
 
-### Quick Start Guide
+### **🎯 Quick Start Guide**
 
-1. **Launch Lexia**
+1. **🚀 Launch Lexia**
    - **Executable**: Double-click `Lexia.exe`
-   - **Source**: Run `python main.py`
+   - **First-time**: Setup wizard opens automatically
+   - **Returning users**: Runs in background
 
-2. **Select text** anywhere (browser, Word, email, etc.)
+2. **📝 Select text** anywhere (browser, Word, email, etc.)
 
-3. **Press hotkey** (default: `Ctrl+Shift+R`)
+3. **⌨️ Press hotkey** (default: `Ctrl+Shift+R`)
 
-4. **Configure and rewrite**:
+4. **🤖 Configure and rewrite**:
    - Choose AI model (GPT-4 or Llama-4-Scout)
    - Select preset style or enter custom instructions
-   - Click "🔄 Rewrite" to generate alternatives
+   - Click "🔄 Rewrite" to generate 3 alternatives
 
-5. **Select and copy** your preferred version
+5. **✨ Select and copy** your preferred version
 
-6. **Done!** Text is copied to clipboard and ready to paste
+6. **🎉 Done!** Text is copied to clipboard and ready to paste
+
+### **⚙️ Access Settings**
+- **During setup**: Automatic first-time wizard
+- **Anytime**: File → Settings in the rewrite window
+- **Configure**: API keys, hotkeys, temperature, alternatives count
 
 ### Custom Instructions Examples
 
@@ -192,39 +214,46 @@ lexia/
 - **Version Management**: Centralized versioning with build metadata
 
 ### **Security & Privacy**
-- **Local Storage**: API keys stored locally in `config.py`
-- **No Telemetry**: No usage data collection or external logging
-- **Real-time Processing**: Text processed immediately, not stored
-- **Open Source**: Full transparency with MIT license
+- **🔒 Secure Local Storage**: API keys stored locally with base64 encoding
+- **🚫 No Telemetry**: No usage data collection or external logging
+- **⚡ Real-time Processing**: Text processed immediately, not stored
+- **🔓 Open Source**: Full transparency with MIT license
+- **🛡️ No Cloud Dependencies**: Everything runs on your computer
 
 ## Troubleshooting
 
-### Common Issues
+### **🔧 Common Issues**
 
-1. **"Application already running" error**
+1. **🔄 "Application already running" error**
    - Delete `app.lock` file and restart
    - Only one instance can run at a time
 
-2. **API errors**
-   - Check your API keys in `config.py`
+2. **🔑 API key issues**
+   - Go to **File → Settings → API Keys** tab
+   - Re-enter your API keys in the GUI
+   - Test keys using the "Test API Keys" button
    - Ensure you have API credits/billing set up
-   - Check internet connection
 
-3. **Hotkey not working**
-   - Try running as administrator
+3. **⌨️ Hotkey not working**
+   - Try running as administrator  
    - Check if hotkey conflicts with other applications
-   - Change hotkey in settings
+   - Change hotkey in **File → Settings → General** tab
 
-4. **Dependencies issues**
+4. **🐍 Running from source issues**
    - Ensure Python 3.7+ is installed
    - Run `pip install -r requirements.txt` again
    - Try creating a virtual environment
 
-### Getting Help
+5. **🎯 First-time setup issues**
+   - Restart Lexia.exe to re-trigger setup wizard
+   - Manually open settings: **File → Settings → API Keys**
+
+### **🆘 Getting Help**
 
 - Check console output for error messages
-- Ensure all dependencies are installed correctly
-- Verify API keys are valid and have sufficient credits
+- Verify API keys are valid with sufficient credits
+- Use the built-in "Test API Keys" feature in settings
+- Report issues at [GitHub Issues](https://github.com/stardust-96/lexia/issues)
 
 ## 🏗️ Development
 
