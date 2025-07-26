@@ -28,15 +28,27 @@ def clean_build():
 def build_executable():
     """Build the executable using PyInstaller"""
     print("Building Lexia executable...")
+    print("This may take 5-15 minutes...")
     
     try:
-        # Run PyInstaller with the spec file
-        result = subprocess.run([
+        # Run PyInstaller with the spec file - show output in real-time
+        process = subprocess.Popen([
             sys.executable, '-m', 'PyInstaller',
             '--clean',
             '--noconfirm',
+            '--log-level=INFO',
             'lexia.spec'
-        ], check=True, capture_output=True, text=True)
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        
+        # Print output in real-time
+        for line in process.stdout:
+            print(f"  {line.rstrip()}")
+        
+        process.wait()
+        
+        if process.returncode != 0:
+            print(f"Build failed with return code: {process.returncode}")
+            return False
         
         print("Build completed successfully!")
         print(f"Executable created: dist/Lexia.exe")
@@ -49,9 +61,8 @@ def build_executable():
         
         return True
         
-    except subprocess.CalledProcessError as e:
-        print("Build failed!")
-        print("Error output:", e.stderr)
+    except Exception as e:
+        print(f"Build failed with error: {e}")
         return False
 
 def test_executable():
