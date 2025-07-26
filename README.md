@@ -2,9 +2,9 @@
 
 A powerful desktop application that provides intelligent text rewriting with customizable styles and AI models. Similar to Grammarly but with more flexibility and AI model options.
 
-[![Release](https://img.shields.io/github/v/release/stardust-96/lexia?label=Release)](https://github.com/stardust-96/lexia/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/stardust-96/lexia/total?label=Downloads)](https://github.com/stardust-96/lexia/releases)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-brightgreen.svg)](https://github.com/stardust-96/lexia/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/stardust-96/lexia)
 
 ## 🚀 Quick Start
 
