@@ -156,7 +156,10 @@ def show_popup(original: str):
             temp_settings = load_settings()
             temp_settings['model'] = model_var.get()
             
-            alternatives = rewrite_text_with_gpt(original, effective_tone, model_override=model_var.get())
+            # Load current settings to get num_alternatives
+            current_settings = load_settings()
+            num_alts = current_settings.get('num_alternatives', 3)
+            alternatives = rewrite_text_with_gpt(original, effective_tone, num_alternatives=num_alts, model_override=model_var.get())
             selected_alternative = 0
             
             print(f"Generated {len(alternatives)} alternatives")  # Debug
