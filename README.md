@@ -2,15 +2,15 @@
 
 A powerful desktop application that provides intelligent text rewriting with customizable styles and AI models. Similar to Grammarly but with more flexibility and AI model options.
 
-[![Release](https://img.shields.io/github/v/release/stardust-96/lexia)](https://github.com/stardust-96/lexia/releases)
-[![Downloads](https://img.shields.io/github/downloads/stardust-96/lexia/total)](https://github.com/stardust-96/lexia/releases)
-[![License](https://img.shields.io/github/license/stardust-96/lexia)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/stardust-96/lexia?label=Release)](https://github.com/stardust-96/lexia/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/stardust-96/lexia/total?label=Downloads)](https://github.com/stardust-96/lexia/releases)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## 🚀 Quick Start
 
 ### **🎯 Super Easy Installation (Recommended)**
 1. Go to [Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. Download `Lexia-v1.1.0-Windows.zip`
+2. Download `Lexia-v1.2.0-Windows.zip`
 3. Extract to any folder
 4. Run `Lexia.exe`
 5. **First-time setup wizard opens automatically**
@@ -51,6 +51,8 @@ python main.py
 - **🎨 Modern UI**: Clean interface with dynamic text sizing
 - **📋 One-Click Copy**: Copy and close with single button
 - **🔄 Auto-Updates**: Built-in update checker
+- **📍 System Tray**: Minimize to system tray with right-click menu
+- **🚪 Easy Exit**: Properly quit via system tray icon
 
 ### ⚙️ Customization
 - **Hotkey Configuration**: Set your preferred keyboard shortcut
@@ -62,7 +64,7 @@ python main.py
 
 ### **🎯 Windows Executable (Recommended - Super Easy!)**
 1. **Download** the latest release from [GitHub Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. **Extract** `Lexia-v1.1.0-Windows.zip` to any folder
+2. **Extract** `Lexia-v1.2.0-Windows.zip` to any folder
 3. **Run** `Lexia.exe`
 4. **🎨 First-time setup opens automatically**
 5. **Enter your API keys** in the professional GUI interface
