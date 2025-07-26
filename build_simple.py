@@ -18,7 +18,7 @@ cmd = [
     '--windowed',
     '--name=Lexia',
     '--icon=lexia.ico',
-    '--strip',
+    '--nostrip',
     '--noupx',
     'main.py'
 ]
