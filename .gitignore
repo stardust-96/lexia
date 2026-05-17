@@ -31,6 +31,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+!lexia.spec
 
 # Installer logs
 pip-log.txt
@@ -59,6 +60,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+leo/
 
 # IDE specific files
 .vscode/
@@ -90,6 +92,9 @@ config.py
 
 # Claude Code context
 CLAUDE.md
+.claude/
+.aiassistant/
+.ai/
 
 # Code signing / certificate material
 *.pem

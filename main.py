@@ -210,9 +210,9 @@ if __name__ == "__main__":
         
         # Show which API keys are configured
         if keys["openai"]:
-            print("✓ OpenAI API key configured")
+            print("[OK] OpenAI API key configured")
         if keys["groq"]:
-            print("✓ Groq API key configured")
+            print("[OK] Groq API key configured")
         
         # Start system tray icon in a separate thread
         tray_thread = threading.Thread(target=run_tray_icon, daemon=True)

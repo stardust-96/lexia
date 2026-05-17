@@ -5,8 +5,9 @@ import threading
 import webbrowser
 import json
 import urllib.request
+import os
 from rewriter import rewrite_text_with_gpt
-from settings import show_settings_window, load_settings
+from settings import show_settings_window, load_settings, get_api_keys
 from version import VERSION_INFO, get_version_string
 
 selected_tone = "Neutral"
@@ -14,6 +15,7 @@ selected_alternative = 0
 alternatives = []
 selected_model = None
 is_rewriting = False
+DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
 # Application metadata
 APP_VERSION = VERSION_INFO["version"]
@@ -328,6 +330,16 @@ def show_popup(original: str):
     
     model_var = tk.StringVar(value=settings.get('model', 'gpt-4'))
     model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
+    keys = get_api_keys()
+    openai_available = DEV_MODE or bool(keys.get("openai"))
+    groq_available = DEV_MODE or bool(keys.get("groq"))
+
+    # If saved default model is unavailable, fallback to an available one.
+    if not DEV_MODE:
+        if model_var.get() == "gpt-4" and not openai_available and groq_available:
+            model_var.set("llama-4-scout")
+        elif model_var.get() == "llama-4-scout" and not groq_available and openai_available:
+            model_var.set("gpt-4")
     
     def on_model_change():
         # Only trigger rewrite if not currently rewriting
@@ -335,8 +347,10 @@ def show_popup(original: str):
             start_rewrite()
     
     for value, display in model_options:
+        has_required_key = openai_available if value == "gpt-4" else groq_available
         rb = tk.Radiobutton(model_card, text=display, variable=model_var, 
                            value=value, command=on_model_change,
+                           state='normal' if has_required_key else 'disabled',
                            font=("Arial", 10), bg="white", relief="groove", bd=1)
         rb.pack(pady=5, anchor=tk.W, fill=tk.X)
     

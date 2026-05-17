@@ -242,10 +242,25 @@ def show_settings_window(parent=None, on_settings_changed=None):
                                  "• OpenAI: https://platform.openai.com/api-keys\n"
                                  "• Groq: https://console.groq.com/keys")
             return
+
+        selected_model = next((value for value, label in model_options if label == model_dropdown.get()), "gpt-4")
+        if not DEV_MODE:
+            if selected_model == "gpt-4" and not openai_key:
+                messagebox.showwarning(
+                    "Model Requires OpenAI Key",
+                    "GPT-4 is selected as default model, but no OpenAI API key is configured."
+                )
+                return
+            if selected_model == "llama-4-scout" and not groq_key:
+                messagebox.showwarning(
+                    "Model Requires Groq Key",
+                    "Llama-4-Scout is selected as default model, but no Groq API key is configured."
+                )
+                return
         
         new_settings = {
             "hotkey": hotkey_var.get(),
-            "model": next((value for value, label in model_options if label == model_dropdown.get()), "gpt-4"),
+            "model": selected_model,
             "temperature": temp_var.get(),
             "num_alternatives": alt_var.get(),
             "openai_api_key": openai_key,
