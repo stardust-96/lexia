@@ -26,6 +26,7 @@ import tkinter as tk
 last_hotkey_time = 0
 window_open = False
 tray_icon = None
+DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
 def create_icon_image():
     """Create a simple icon for the system tray"""
@@ -54,7 +55,8 @@ def show_settings(icon, item):
     """Show settings window from system tray"""
     root = tk.Tk()
     root.withdraw()
-    show_settings_window(root)
+    win = show_settings_window(root)
+    root.wait_window(win)
     root.destroy()
 
 def show_about(icon, item):
@@ -157,9 +159,9 @@ if __name__ == "__main__":
         
         settings = load_settings()
         
-        # Check for API keys on first run
+        # Check for API keys on first run (skip in development mode)
         keys = get_api_keys()
-        if not keys["openai"] and not keys["groq"]:
+        if not DEV_MODE and not keys["openai"] and not keys["groq"]:
             print("Welcome to Lexia!")
             print("First-time setup: Please configure your API keys...")
             print("Opening settings window...")
@@ -168,7 +170,8 @@ if __name__ == "__main__":
             import tkinter as tk
             root = tk.Tk()
             root.withdraw()  # Hide the root window
-            show_settings_window(root)
+            win = show_settings_window(root)
+            root.wait_window(win)
             root.destroy()
             
             # Reload settings after setup
@@ -182,10 +185,12 @@ if __name__ == "__main__":
         
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         
-        model_name = settings.get('model', 'llama-4-scout')
+        model_name = settings.get('model', 'gpt-4')
         display_name = "GPT-4 (OpenAI)" if model_name == "gpt-4" else "Llama-4-Scout (Groq)"
         
         print("Lexia running...")
+        if DEV_MODE:
+            print("[DEV MODE] Running with LEXIA_DEV_MODE=1")
         print(f"Press {hotkey.upper()} to rewrite selected text")
         print(f"Using model: {display_name}")
         print("Look for Lexia icon in system tray to exit")

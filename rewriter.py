@@ -1,5 +1,8 @@
 from openai import OpenAI
 from settings import get_api_keys, load_settings
+import os
+
+DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
 def get_clients():
     """Get API clients based on current settings"""
@@ -34,6 +37,18 @@ def rewrite_text_with_gpt(original_text: str, tone: str = "Neutral", num_alterna
     
     if not original_text.strip():
         return ["No text provided."]
+
+    if DEV_MODE:
+        base = original_text.strip()
+        prefix = f"[DEV MOCK - {tone}] "
+        mocks = [
+            prefix + base,
+            prefix + base.lower().capitalize(),
+            prefix + base.upper()
+        ]
+        while len(mocks) < num_alternatives:
+            mocks.append(prefix + base)
+        return mocks[:num_alternatives]
 
     # Get API clients
     openai_client, groq_client = get_clients()

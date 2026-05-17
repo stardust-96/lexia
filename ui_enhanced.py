@@ -304,7 +304,7 @@ def show_popup(original: str):
     model_card = ttk.LabelFrame(selection_frame, text="🚀 Model Selection", style='Card.TLabelframe', padding=15)
     model_card.pack(side=tk.LEFT, padx=10, fill=tk.BOTH, expand=True)
     
-    model_var = tk.StringVar(value=settings.get('model', 'llama-4-scout'))
+    model_var = tk.StringVar(value=settings.get('model', 'gpt-4'))
     model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
     
     def on_model_change():

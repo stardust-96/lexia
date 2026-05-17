@@ -3,15 +3,21 @@ from tkinter import ttk, messagebox
 import json
 import os
 import base64
+import binascii
+import webbrowser
+
+try:
+    import keyring
+except ImportError:
+    keyring = None
 
 SETTINGS_FILE = "settings.json"
+KEYRING_SERVICE = "Lexia"
 DEFAULT_SETTINGS = {
     "hotkey": "ctrl+shift+r",
-    "model": "llama-4-scout",
+    "model": "gpt-4",
     "temperature": 0.7,
-    "num_alternatives": 3,
-    "openai_api_key": "",
-    "groq_api_key": ""
+    "num_alternatives": 3
 }
 
 def load_settings():
@@ -38,14 +44,53 @@ def _decode_api_key(encoded_key):
     except:
         return ""
 
+def _decode_legacy_key(value):
+    """Decode a legacy base64 value if possible, otherwise return the original value."""
+    if not value:
+        return ""
+    try:
+        decoded = base64.b64decode(value.encode(), validate=True).decode()
+        return decoded
+    except (binascii.Error, UnicodeDecodeError):
+        return value
+
+def _get_key_from_keyring(name):
+    if keyring is None:
+        return ""
+    try:
+        return keyring.get_password(KEYRING_SERVICE, name) or ""
+    except Exception:
+        return ""
+
+def _set_key_in_keyring(name, value):
+    if keyring is None:
+        return False
+    try:
+        if value:
+            keyring.set_password(KEYRING_SERVICE, name, value)
+        else:
+            try:
+                keyring.delete_password(KEYRING_SERVICE, name)
+            except Exception:
+                pass
+        return True
+    except Exception:
+        return False
+
 def save_settings(settings):
     try:
-        # Encode API keys before saving
         settings_to_save = settings.copy()
-        if "openai_api_key" in settings_to_save:
-            settings_to_save["openai_api_key"] = _encode_api_key(settings_to_save["openai_api_key"])
-        if "groq_api_key" in settings_to_save:
-            settings_to_save["groq_api_key"] = _encode_api_key(settings_to_save["groq_api_key"])
+
+        # Save API keys in OS keychain, not in settings.json
+        openai_key = settings_to_save.pop("openai_api_key", None)
+        groq_key = settings_to_save.pop("groq_api_key", None)
+
+        if openai_key is not None and not _set_key_in_keyring("openai_api_key", openai_key):
+            print("Error saving OpenAI API key to keychain")
+            return False
+        if groq_key is not None and not _set_key_in_keyring("groq_api_key", groq_key):
+            print("Error saving Groq API key to keychain")
+            return False
             
         with open(SETTINGS_FILE, 'w') as f:
             json.dump(settings_to_save, f, indent=2)
@@ -59,17 +104,31 @@ def load_settings():
         try:
             with open(SETTINGS_FILE, 'r') as f:
                 settings = json.load(f)
-            
-            # Decode API keys after loading
-            if "openai_api_key" in settings:
-                settings["openai_api_key"] = _decode_api_key(settings["openai_api_key"])
-            if "groq_api_key" in settings:
-                settings["groq_api_key"] = _decode_api_key(settings["groq_api_key"])
+
+            # One-time migration: move legacy keys from settings.json to keychain
+            migrated = False
+            legacy_openai = settings.pop("openai_api_key", None)
+            legacy_groq = settings.pop("groq_api_key", None)
+            if legacy_openai is not None:
+                decoded = _decode_legacy_key(legacy_openai)
+                _set_key_in_keyring("openai_api_key", decoded)
+                migrated = True
+            if legacy_groq is not None:
+                decoded = _decode_legacy_key(legacy_groq)
+                _set_key_in_keyring("groq_api_key", decoded)
+                migrated = True
+            if migrated:
+                with open(SETTINGS_FILE, 'w') as f:
+                    json.dump(settings, f, indent=2)
                 
             # Ensure all default keys exist
             for key, value in DEFAULT_SETTINGS.items():
                 if key not in settings:
                     settings[key] = value
+
+            # Populate UI fields from keychain
+            settings["openai_api_key"] = _get_key_from_keyring("openai_api_key")
+            settings["groq_api_key"] = _get_key_from_keyring("groq_api_key")
                     
             return settings
         except:
@@ -78,10 +137,9 @@ def load_settings():
 
 def get_api_keys():
     """Get API keys from settings"""
-    settings = load_settings()
     return {
-        "openai": settings.get("openai_api_key", ""),
-        "groq": settings.get("groq_api_key", "")
+        "openai": _get_key_from_keyring("openai_api_key"),
+        "groq": _get_key_from_keyring("groq_api_key")
     }
 
 def show_settings_window(parent=None, on_settings_changed=None):
@@ -89,12 +147,15 @@ def show_settings_window(parent=None, on_settings_changed=None):
     
     settings_window = tk.Toplevel(parent) if parent else tk.Tk()
     settings_window.title("Lexia Settings")
-    settings_window.geometry("500x450")
-    settings_window.resizable(False, False)
+    settings_window.geometry("560x560")
+    settings_window.minsize(560, 560)
+    settings_window.resizable(True, True)
+    settings_window.grid_rowconfigure(0, weight=1)
+    settings_window.grid_columnconfigure(0, weight=1)
     
     # Create notebook for tabs
     notebook = ttk.Notebook(settings_window)
-    notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=(10, 0))
     
     # General Settings Tab
     general_frame = ttk.Frame(notebook)
@@ -103,6 +164,26 @@ def show_settings_window(parent=None, on_settings_changed=None):
     # API Keys Tab
     api_frame = ttk.Frame(notebook)
     notebook.add(api_frame, text="API Keys")
+    api_frame.grid_rowconfigure(0, weight=1)
+    api_frame.grid_columnconfigure(0, weight=1)
+
+    api_canvas = tk.Canvas(api_frame, highlightthickness=0)
+    api_scrollbar = ttk.Scrollbar(api_frame, orient="vertical", command=api_canvas.yview)
+    api_content = ttk.Frame(api_canvas)
+
+    api_content.bind(
+        "<Configure>",
+        lambda e: api_canvas.configure(scrollregion=api_canvas.bbox("all"))
+    )
+    api_canvas.bind(
+        "<Configure>",
+        lambda e: api_canvas.itemconfigure("api_content_window", width=e.width)
+    )
+    api_canvas.create_window((0, 0), window=api_content, anchor="nw", tags="api_content_window")
+    api_canvas.configure(yscrollcommand=api_scrollbar.set)
+
+    api_canvas.grid(row=0, column=0, sticky="nsew")
+    api_scrollbar.grid(row=0, column=1, sticky="ns")
     
     # GENERAL TAB CONTENT
     # Hotkey Section
@@ -118,6 +199,24 @@ def show_settings_window(parent=None, on_settings_changed=None):
     
     # Model Section
     tk.Label(general_frame, text="Model Settings", font=('Arial', 12, 'bold')).pack(pady=(20, 5))
+
+    # Default model
+    model_frame = tk.Frame(general_frame)
+    model_frame.pack(pady=5)
+
+    tk.Label(model_frame, text="Default Model:").pack(side=tk.LEFT, padx=5)
+    model_var = tk.StringVar(value=settings.get("model", "gpt-4"))
+    model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
+    model_dropdown = ttk.Combobox(
+        model_frame,
+        textvariable=model_var,
+        values=[label for _, label in model_options],
+        state='readonly',
+        width=24
+    )
+    selected_label = next((label for value, label in model_options if value == model_var.get()), "GPT-4 (OpenAI)")
+    model_dropdown.set(selected_label)
+    model_dropdown.pack(side=tk.LEFT, padx=5)
     
     # Temperature
     temp_frame = tk.Frame(general_frame)
@@ -143,21 +242,38 @@ def show_settings_window(parent=None, on_settings_changed=None):
     info_label.pack(pady=10)
     
     # API KEYS TAB CONTENT
-    tk.Label(api_frame, text="API Configuration", font=('Arial', 14, 'bold')).pack(pady=(15, 10))
+    tk.Label(api_content, text="API Configuration", font=('Arial', 14, 'bold')).pack(pady=(15, 10))
     
     # Description
-    desc_text = ("Enter your API keys below. Keys are stored locally and encrypted.\n"
+    desc_text = ("Enter your API keys below. Keys are stored in your OS credential store.\n"
                 "You only need one API key to use Lexia.")
-    tk.Label(api_frame, text=desc_text, font=('Arial', 9), fg="gray", justify=tk.CENTER).pack(pady=(0, 15))
+    tk.Label(
+        api_content,
+        text=desc_text,
+        font=('Arial', 9),
+        fg="gray",
+        justify=tk.CENTER,
+        wraplength=500
+    ).pack(pady=(0, 15), padx=10)
+    if keyring is None:
+        tk.Label(
+            api_content,
+            text="Credential-store support is unavailable in this Python environment.\nInstall 'keyring' to save API keys.",
+            font=('Arial', 9, 'bold'),
+            fg="#c0392b",
+            justify=tk.CENTER
+        ).pack(pady=(0, 10))
     
     # OpenAI API Key
-    openai_frame = tk.LabelFrame(api_frame, text="OpenAI (for GPT-4)", font=('Arial', 10, 'bold'), padx=10, pady=10)
+    openai_frame = tk.LabelFrame(api_content, text="OpenAI (for GPT-4)", font=('Arial', 10, 'bold'), padx=10, pady=10)
     openai_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
     
     tk.Label(openai_frame, text="API Key:", font=('Arial', 9)).pack(anchor=tk.W)
+    openai_key_row = tk.Frame(openai_frame)
+    openai_key_row.pack(fill=tk.X, pady=(2, 5))
     openai_var = tk.StringVar(value=settings.get("openai_api_key", ""))
-    openai_entry = tk.Entry(openai_frame, textvariable=openai_var, width=60, show="*", font=('Arial', 9))
-    openai_entry.pack(fill=tk.X, pady=(2, 5))
+    openai_entry = tk.Entry(openai_key_row, textvariable=openai_var, show="*", font=('Arial', 9))
+    openai_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
     
     def toggle_openai_visibility():
         if openai_entry.cget('show') == '*':
@@ -167,20 +283,29 @@ def show_settings_window(parent=None, on_settings_changed=None):
             openai_entry.config(show='*')
             openai_show_btn.config(text="Show")
     
-    openai_show_btn = tk.Button(openai_frame, text="Show", command=toggle_openai_visibility, font=('Arial', 8))
-    openai_show_btn.pack(anchor=tk.E)
+    openai_show_btn = tk.Button(openai_key_row, text="Show", command=toggle_openai_visibility, font=('Arial', 8), width=6)
+    openai_show_btn.pack(side=tk.RIGHT)
     
-    tk.Label(openai_frame, text="Get your key at: https://platform.openai.com/api-keys", 
-             font=('Arial', 8), fg="blue", cursor="hand2").pack(anchor=tk.W, pady=(5, 0))
+    openai_link = tk.Label(
+        openai_frame,
+        text="Get your key at: https://platform.openai.com/api-keys",
+        font=('Arial', 8, 'underline'),
+        fg="blue",
+        cursor="hand2"
+    )
+    openai_link.pack(anchor=tk.W, pady=(5, 0))
+    openai_link.bind("<Button-1>", lambda e: webbrowser.open("https://platform.openai.com/api-keys"))
     
     # Groq API Key
-    groq_frame = tk.LabelFrame(api_frame, text="Groq (for Llama-4-Scout)", font=('Arial', 10, 'bold'), padx=10, pady=10)
+    groq_frame = tk.LabelFrame(api_content, text="Groq (for Llama-4-Scout)", font=('Arial', 10, 'bold'), padx=10, pady=10)
     groq_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
     
     tk.Label(groq_frame, text="API Key:", font=('Arial', 9)).pack(anchor=tk.W)
+    groq_key_row = tk.Frame(groq_frame)
+    groq_key_row.pack(fill=tk.X, pady=(2, 5))
     groq_var = tk.StringVar(value=settings.get("groq_api_key", ""))
-    groq_entry = tk.Entry(groq_frame, textvariable=groq_var, width=60, show="*", font=('Arial', 9))
-    groq_entry.pack(fill=tk.X, pady=(2, 5))
+    groq_entry = tk.Entry(groq_key_row, textvariable=groq_var, show="*", font=('Arial', 9))
+    groq_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 8))
     
     def toggle_groq_visibility():
         if groq_entry.cget('show') == '*':
@@ -190,11 +315,18 @@ def show_settings_window(parent=None, on_settings_changed=None):
             groq_entry.config(show='*')
             groq_show_btn.config(text="Show")
     
-    groq_show_btn = tk.Button(groq_frame, text="Show", command=toggle_groq_visibility, font=('Arial', 8))
-    groq_show_btn.pack(anchor=tk.E)
+    groq_show_btn = tk.Button(groq_key_row, text="Show", command=toggle_groq_visibility, font=('Arial', 8), width=6)
+    groq_show_btn.pack(side=tk.RIGHT)
     
-    tk.Label(groq_frame, text="Get your key at: https://console.groq.com/keys", 
-             font=('Arial', 8), fg="blue", cursor="hand2").pack(anchor=tk.W, pady=(5, 0))
+    groq_link = tk.Label(
+        groq_frame,
+        text="Get your key at: https://console.groq.com/keys",
+        font=('Arial', 8, 'underline'),
+        fg="blue",
+        cursor="hand2"
+    )
+    groq_link.pack(anchor=tk.W, pady=(5, 0))
+    groq_link.bind("<Button-1>", lambda e: webbrowser.open("https://console.groq.com/keys"))
     
     # Test API Keys Button
     def test_api_keys():
@@ -221,15 +353,23 @@ def show_settings_window(parent=None, on_settings_changed=None):
         
         messagebox.showinfo("API Key Test", "\n".join(messages))
     
-    test_button = tk.Button(api_frame, text="Test API Keys", command=test_api_keys, 
+    test_button = tk.Button(api_content, text="Test API Keys", command=test_api_keys, 
                            bg="#3498db", fg="white", font=('Arial', 9))
     test_button.pack(pady=10)
     
     # Buttons
     button_frame = tk.Frame(settings_window)
-    button_frame.pack(side=tk.BOTTOM, pady=15)
+    button_frame.grid(row=1, column=0, pady=15, sticky="ew")
     
     def save_and_close():
+        if keyring is None:
+            messagebox.showerror(
+                "Credential Store Unavailable",
+                "Cannot save API keys because keyring support is missing.\n\n"
+                "Install dependency: pip install keyring"
+            )
+            return
+
         # Validate that at least one API key is provided
         openai_key = openai_var.get().strip()
         groq_key = groq_var.get().strip()
@@ -244,7 +384,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
         
         new_settings = {
             "hotkey": hotkey_var.get(),
-            "model": settings["model"],  # Keep existing model
+            "model": next((value for value, label in model_options if label == model_dropdown.get()), "gpt-4"),
             "temperature": temp_var.get(),
             "num_alternatives": alt_var.get(),
             "openai_api_key": openai_key,
@@ -252,7 +392,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
         }
         
         if save_settings(new_settings):
-            messagebox.showinfo("Success", "Settings saved successfully!\n\nAPI keys are stored securely on your computer.")
+            messagebox.showinfo("Success", "Settings saved successfully!\n\nAPI keys are stored in your OS credential store.")
             if on_settings_changed:
                 on_settings_changed(new_settings)
             settings_window.destroy()
@@ -274,6 +414,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
     
     if not parent:
         settings_window.mainloop()
+    return settings_window
 
 if __name__ == "__main__":
     show_settings_window()
