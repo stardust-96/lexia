@@ -79,9 +79,7 @@ Desktop.ini
 settings.json      # User settings - personal preferences
 app.lock          # Runtime lock file
 history.jsonl     # History file (if re-added)
-
-# Note: config.py is included in repo as template
-# Users should replace placeholder keys with real ones
+config.py         # Local runtime config (do not commit secrets)
 
 # Logs
 *.log
@@ -92,6 +90,12 @@ history.jsonl     # History file (if re-added)
 
 # Claude Code context
 CLAUDE.md
+
+# Code signing / certificate material
+*.pem
+*.key
+*.pfx
+*.p12
 
 # Build artifacts
 build/
