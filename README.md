@@ -73,7 +73,7 @@ python main.py
 ### **💻 From Source (Developers)**
 
 #### Prerequisites
-- Python 3.7+
+- Python 3.11+ recommended
 - pip package manager
 
 #### Setup Steps
@@ -161,7 +161,7 @@ Access settings through the popup menu: **File → Settings**
 ## Configuration Files
 
 - `settings.json`: User preferences (hotkey, model, temperature, etc.)
-- `config.py`: API keys and model configurations
+- OS Credential Store (via `keyring`): API keys
 - `app.lock`: Prevents multiple instances (auto-managed)
 
 ## 📁 Project Structure
@@ -176,8 +176,8 @@ lexia/
 │   └── version.py          # Version management
 │
 ├── ⚙️ Configuration
-│   ├── config.py           # API keys (created from example)
-│   ├── config.example.py   # Configuration template
+│   ├── settings.py         # Settings UI logic
+│   ├── settings_store.py   # Settings + key storage backend
 │   └── settings.json       # User preferences (auto-generated)
 │
 ├── 🔨 Build System
@@ -216,7 +216,7 @@ lexia/
 - **Version Management**: Centralized versioning with build metadata
 
 ### **Security & Privacy**
-- **🔒 Secure Local Storage**: API keys stored locally with base64 encoding
+- **🔒 Secure Local Storage**: API keys stored in your OS credential store
 - **🚫 No Telemetry**: No usage data collection or external logging
 - **⚡ Real-time Processing**: Text processed immediately, not stored
 - **🔓 Open Source**: Full transparency with MIT license
@@ -242,7 +242,7 @@ lexia/
    - Change hotkey in **File → Settings → General** tab
 
 4. **🐍 Running from source issues**
-   - Ensure Python 3.7+ is installed
+   - Ensure Python 3.11+ is installed
    - Run `pip install -r requirements.txt` again
    - Try creating a virtual environment
 
@@ -280,6 +280,16 @@ python main.py
 # Build executable
 python build.py
 ```
+
+### **Development Mode (No API Keys Required)**
+Use mock rewrites and bypass startup key requirement:
+
+```powershell
+$env:LEXIA_DEV_MODE='1'
+python main.py
+```
+
+Mock responses are clearly prefixed with `[DEV MOCK - ...]`.
 
 ### **Creating Releases**
 ```bash

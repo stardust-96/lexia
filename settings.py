@@ -1,146 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import json
-import os
-import base64
-import binascii
 import webbrowser
-
-try:
-    import keyring
-except ImportError:
-    keyring = None
-
-SETTINGS_FILE = "settings.json"
-KEYRING_SERVICE = "Lexia"
-DEFAULT_SETTINGS = {
-    "hotkey": "ctrl+shift+r",
-    "model": "gpt-4",
-    "temperature": 0.7,
-    "num_alternatives": 3
-}
-
-def load_settings():
-    if os.path.exists(SETTINGS_FILE):
-        try:
-            with open(SETTINGS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return DEFAULT_SETTINGS.copy()
-    return DEFAULT_SETTINGS.copy()
-
-def _encode_api_key(key):
-    """Simple base64 encoding for API keys (not encryption, just obfuscation)"""
-    if not key:
-        return ""
-    return base64.b64encode(key.encode()).decode()
-
-def _decode_api_key(encoded_key):
-    """Decode base64 encoded API key"""
-    if not encoded_key:
-        return ""
-    try:
-        return base64.b64decode(encoded_key.encode()).decode()
-    except:
-        return ""
-
-def _decode_legacy_key(value):
-    """Decode a legacy base64 value if possible, otherwise return the original value."""
-    if not value:
-        return ""
-    try:
-        decoded = base64.b64decode(value.encode(), validate=True).decode()
-        return decoded
-    except (binascii.Error, UnicodeDecodeError):
-        return value
-
-def _get_key_from_keyring(name):
-    if keyring is None:
-        return ""
-    try:
-        return keyring.get_password(KEYRING_SERVICE, name) or ""
-    except Exception:
-        return ""
-
-def _set_key_in_keyring(name, value):
-    if keyring is None:
-        return False
-    try:
-        if value:
-            keyring.set_password(KEYRING_SERVICE, name, value)
-        else:
-            try:
-                keyring.delete_password(KEYRING_SERVICE, name)
-            except Exception:
-                pass
-        return True
-    except Exception:
-        return False
-
-def save_settings(settings):
-    try:
-        settings_to_save = settings.copy()
-
-        # Save API keys in OS keychain, not in settings.json
-        openai_key = settings_to_save.pop("openai_api_key", None)
-        groq_key = settings_to_save.pop("groq_api_key", None)
-
-        if openai_key is not None and not _set_key_in_keyring("openai_api_key", openai_key):
-            print("Error saving OpenAI API key to keychain")
-            return False
-        if groq_key is not None and not _set_key_in_keyring("groq_api_key", groq_key):
-            print("Error saving Groq API key to keychain")
-            return False
-            
-        with open(SETTINGS_FILE, 'w') as f:
-            json.dump(settings_to_save, f, indent=2)
-        return True
-    except Exception as e:
-        print(f"Error saving settings: {e}")
-        return False
-
-def load_settings():
-    if os.path.exists(SETTINGS_FILE):
-        try:
-            with open(SETTINGS_FILE, 'r') as f:
-                settings = json.load(f)
-
-            # One-time migration: move legacy keys from settings.json to keychain
-            migrated = False
-            legacy_openai = settings.pop("openai_api_key", None)
-            legacy_groq = settings.pop("groq_api_key", None)
-            if legacy_openai is not None:
-                decoded = _decode_legacy_key(legacy_openai)
-                _set_key_in_keyring("openai_api_key", decoded)
-                migrated = True
-            if legacy_groq is not None:
-                decoded = _decode_legacy_key(legacy_groq)
-                _set_key_in_keyring("groq_api_key", decoded)
-                migrated = True
-            if migrated:
-                with open(SETTINGS_FILE, 'w') as f:
-                    json.dump(settings, f, indent=2)
-                
-            # Ensure all default keys exist
-            for key, value in DEFAULT_SETTINGS.items():
-                if key not in settings:
-                    settings[key] = value
-
-            # Populate UI fields from keychain
-            settings["openai_api_key"] = _get_key_from_keyring("openai_api_key")
-            settings["groq_api_key"] = _get_key_from_keyring("groq_api_key")
-                    
-            return settings
-        except:
-            return DEFAULT_SETTINGS.copy()
-    return DEFAULT_SETTINGS.copy()
-
-def get_api_keys():
-    """Get API keys from settings"""
-    return {
-        "openai": _get_key_from_keyring("openai_api_key"),
-        "groq": _get_key_from_keyring("groq_api_key")
-    }
+from settings_store import DEV_MODE, get_api_keys, keyring_available, load_settings, save_settings
 
 def show_settings_window(parent=None, on_settings_changed=None):
     settings = load_settings()
@@ -255,7 +116,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
         justify=tk.CENTER,
         wraplength=500
     ).pack(pady=(0, 15), padx=10)
-    if keyring is None:
+    if not keyring_available():
         tk.Label(
             api_content,
             text="Credential-store support is unavailable in this Python environment.\nInstall 'keyring' to save API keys.",
@@ -362,7 +223,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
     button_frame.grid(row=1, column=0, pady=15, sticky="ew")
     
     def save_and_close():
-        if keyring is None:
+        if not keyring_available():
             messagebox.showerror(
                 "Credential Store Unavailable",
                 "Cannot save API keys because keyring support is missing.\n\n"
@@ -370,11 +231,11 @@ def show_settings_window(parent=None, on_settings_changed=None):
             )
             return
 
-        # Validate that at least one API key is provided
+        # Validate that at least one API key is provided (except in dev mode)
         openai_key = openai_var.get().strip()
         groq_key = groq_var.get().strip()
         
-        if not openai_key and not groq_key:
+        if not DEV_MODE and not openai_key and not groq_key:
             messagebox.showwarning("API Keys Required", 
                                  "Please enter at least one API key to use Lexia.\n\n"
                                  "You can get API keys from:\n"

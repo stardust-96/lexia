@@ -79,6 +79,7 @@ def show_about_dialog(parent):
         update_btn.config(text="Checking...", state="disabled")
         
         def check():
+            result = {"status": "error", "message": ""}
             try:
                 # Simple version check against GitHub releases
                 with urllib.request.urlopen(RELEASE_API_URL, timeout=5) as response:
@@ -86,29 +87,41 @@ def show_about_dialog(parent):
                     latest_version = data.get("tag_name", "").lstrip("v")
                     
                     if latest_version and latest_version != APP_VERSION:
-                        result = messagebox.askyesno(
-                            "Update Available",
-                            f"A new version ({latest_version}) is available!\n\n"
-                            f"Current version: {APP_VERSION}\n\n"
-                            "Would you like to visit the download page?",
-                            parent=about_window
-                        )
-                        if result:
-                            webbrowser.open(GITHUB_URL + "/releases/latest")
+                        result = {
+                            "status": "update",
+                            "message": latest_version
+                        }
                     else:
-                        messagebox.showinfo(
-                            "No Updates",
-                            f"{APP_NAME} is up to date!",
-                            parent=about_window
-                        )
+                        result = {"status": "latest", "message": ""}
             except Exception as e:
-                messagebox.showerror(
-                    "Update Check Failed",
-                    f"Could not check for updates:\n{str(e)}",
-                    parent=about_window
-                )
-            finally:
+                result = {"status": "error", "message": str(e)}
+
+            def apply_update_result():
+                if result["status"] == "update":
+                    confirm = messagebox.askyesno(
+                        "Update Available",
+                        f"A new version ({result['message']}) is available!\n\n"
+                        f"Current version: {APP_VERSION}\n\n"
+                        "Would you like to visit the download page?",
+                        parent=about_window
+                    )
+                    if confirm:
+                        webbrowser.open(GITHUB_URL + "/releases/latest")
+                elif result["status"] == "latest":
+                    messagebox.showinfo(
+                        "No Updates",
+                        f"{APP_NAME} is up to date!",
+                        parent=about_window
+                    )
+                else:
+                    messagebox.showerror(
+                        "Update Check Failed",
+                        f"Could not check for updates:\n{result['message']}",
+                        parent=about_window
+                    )
                 update_btn.config(text="Check for Updates", state="normal")
+
+            about_window.after(0, apply_update_result)
         
         # Run in thread to avoid blocking UI
         threading.Thread(target=check, daemon=True).start()
@@ -146,46 +159,52 @@ def show_popup(original: str):
 
         def process():
             global alternatives, selected_alternative
-            
-            # Show loading animation
-            loading_label.config(text="⏳ Rewriting with " + model_var.get() + "...", fg="#0066cc")
-            popup.update()
-            
-            # Override model for this rewrite
-            import json
-            temp_settings = load_settings()
-            temp_settings['model'] = model_var.get()
-            
-            # Load current settings to get num_alternatives
+
             current_settings = load_settings()
             num_alts = current_settings.get('num_alternatives', 3)
-            alternatives = rewrite_text_with_gpt(original, effective_tone, num_alternatives=num_alts, model_override=model_var.get())
-            selected_alternative = 0
-            
-            print(f"Generated {len(alternatives)} alternatives")  # Debug
-            
-            for widget in alternative_frame.winfo_children():
-                widget.destroy()
-            
-            radio_var.set(0)
-            for i, alt in enumerate(alternatives):
-                radio = tk.Radiobutton(alternative_frame, text=f"v{i+1}", 
-                                     variable=radio_var, value=i, 
-                                     command=lambda idx=i: update_alternative(idx),
-                                     bg="white", font=("Arial", 10, "bold"), relief="raised", bd=2,
-                                     padx=8, pady=4, selectcolor="#3498db")
-                radio.pack(side=tk.LEFT, padx=3)
-            
-            update_alternative(0)
-            
-            loading_label.config(text="✅ Rewriting complete. Select an alternative:", fg="#009900")
-            copy_button.config(state='normal')
-            submit_button.config(state='normal')
-            
-            global is_rewriting
-            is_rewriting = False  # Reset the flag
+            generated = rewrite_text_with_gpt(
+                original,
+                effective_tone,
+                num_alternatives=num_alts,
+                model_override=model_var.get()
+            )
 
-        threading.Thread(target=process).start()
+            def apply_rewrite_results():
+                global alternatives, selected_alternative, is_rewriting
+                alternatives = generated
+                selected_alternative = 0
+
+                for widget in alternative_frame.winfo_children():
+                    widget.destroy()
+
+                radio_var.set(0)
+                for i, _ in enumerate(alternatives):
+                    radio = tk.Radiobutton(
+                        alternative_frame,
+                        text=f"v{i+1}",
+                        variable=radio_var,
+                        value=i,
+                        command=lambda idx=i: update_alternative(idx),
+                        bg="white",
+                        font=("Arial", 10, "bold"),
+                        relief="raised",
+                        bd=2,
+                        padx=8,
+                        pady=4,
+                        selectcolor="#3498db"
+                    )
+                    radio.pack(side=tk.LEFT, padx=3)
+
+                update_alternative(0)
+                loading_label.config(text="✅ Rewriting complete. Select an alternative:", fg="#009900")
+                copy_button.config(state='normal')
+                submit_button.config(state='normal')
+                is_rewriting = False
+
+            popup.after(0, apply_rewrite_results)
+
+        loading_label.config(text="⏳ Rewriting with " + model_var.get() + "...", fg="#0066cc")
+        threading.Thread(target=process, daemon=True).start()
 
     def update_alternative(idx):
         global selected_alternative
@@ -277,15 +296,18 @@ def show_popup(original: str):
     settings = load_settings()
     model_display = "GPT-4 (OpenAI)" if settings['model'] == "gpt-4" else "Llama-4-Scout (Groq)"
     help_menu.add_command(label=f"Model: {model_display}", state='disabled')
+    model_menu_index = help_menu.index("end")
     help_menu.add_command(label=f"Temperature: {settings['temperature']}", state='disabled')
+    temperature_menu_index = help_menu.index("end")
     help_menu.add_command(label=f"Alternatives: {settings['num_alternatives']}", state='disabled')
+    alternatives_menu_index = help_menu.index("end")
     
     def update_model_settings(new_settings):
         # Update help menu with new settings
         model_display = "GPT-4 (OpenAI)" if new_settings['model'] == "gpt-4" else "Llama-4-Scout (Groq)"
-        help_menu.entryconfig(0, label=f"Model: {model_display}")
-        help_menu.entryconfig(1, label=f"Temperature: {new_settings['temperature']}")
-        help_menu.entryconfig(2, label=f"Alternatives: {new_settings['num_alternatives']}")
+        help_menu.entryconfig(model_menu_index, label=f"Model: {model_display}")
+        help_menu.entryconfig(temperature_menu_index, label=f"Temperature: {new_settings['temperature']}")
+        help_menu.entryconfig(alternatives_menu_index, label=f"Alternatives: {new_settings['num_alternatives']}")
 
     # Header
     header_frame = tk.Frame(popup, bg="#2c3e50", height=60)

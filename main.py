@@ -104,20 +104,33 @@ def handle_hotkey():
     
     last_hotkey_time = current_time
     window_open = True
-    
-    # Simulate Ctrl+C to copy selected text
-    pyautogui.hotkey('ctrl', 'c')
-    time.sleep(0.2)  # Give clipboard time to update
 
-    original_text = pyperclip.paste().strip()
-    if not original_text:
-        print("No text selected.")
-        window_open = False
-        return
+    try:
+        # Simulate Ctrl+C to copy selected text
+        try:
+            pyautogui.hotkey('ctrl', 'c')
+        except Exception as e:
+            print(f"Failed to trigger copy hotkey: {e}")
+            return
 
-    # Open the UI window
-    show_popup(original_text)
-    window_open = False  # Reset when window closes
+        time.sleep(0.2)  # Give clipboard time to update
+
+        try:
+            original_text = pyperclip.paste().strip()
+        except Exception as e:
+            print(f"Failed to read clipboard: {e}")
+            return
+
+        if not original_text:
+            print("No text selected.")
+            return
+
+        # Open the UI window
+        show_popup(original_text)
+    except Exception as e:
+        print(f"Unexpected error while handling hotkey: {e}")
+    finally:
+        window_open = False  # Always reset state
 
 if __name__ == "__main__":
     # Set process name for Task Manager
