@@ -79,7 +79,7 @@ Desktop.ini
 settings.json      # User settings - personal preferences
 app.lock          # Runtime lock file
 history.jsonl     # History file (if re-added)
-config.py         # Local runtime config (do not commit secrets)
+config.py
 
 # Logs
 *.log
