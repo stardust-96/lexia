@@ -1,0 +1,6 @@
+{
+  "hotkey": "ctrl+shift+r",
+  "model": "gpt-4",
+  "temperature": 0.7,
+  "num_alternatives": 3
+}
