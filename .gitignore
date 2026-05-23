@@ -111,3 +111,4 @@ release/
 
 # Local automation scripts
 scripts/
+/settings.json
