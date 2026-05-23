@@ -18,6 +18,7 @@ import time
 import os
 import sys
 import pystray
+import msvcrt
 from PIL import Image, ImageDraw
 from ui_enhanced import show_popup
 from settings import load_settings, get_api_keys, show_settings_window
@@ -30,6 +31,7 @@ last_hotkey_time = 0
 window_open = False
 tray_icon = None
 DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
+instance_lock_handle = None
 
 
 def get_runtime_data_dir():
@@ -59,11 +61,23 @@ def quit_app(icon, item):
     print("Exiting Lexia...")
     icon.stop()
     keyboard.unhook_all()
-    # Clean up lock file
-    lock_file = os.path.join(get_runtime_data_dir(), "app.lock")
-    if os.path.exists(lock_file):
-        os.remove(lock_file)
     os._exit(0)
+
+
+def acquire_single_instance_lock():
+    """Acquire an OS-level file lock to ensure single-instance execution."""
+    lock_path = os.path.join(get_runtime_data_dir(), "app.lock")
+    handle = open(lock_path, "a+")
+    handle.seek(0)
+    try:
+        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
+        handle.close()
+        return None
+    handle.truncate(0)
+    handle.write(str(os.getpid()))
+    handle.flush()
+    return handle
 
 def show_settings(icon, item):
     """Show settings window from system tray"""
@@ -101,6 +115,15 @@ def run_tray_icon():
     
     # Run the icon
     tray_icon.run()
+
+
+def run_hotkey_listener(hotkey):
+    """Register and keep hotkey listener alive on a background thread."""
+    keyboard.add_hotkey(hotkey, handle_hotkey)
+    try:
+        keyboard.wait()
+    except KeyboardInterrupt:
+        pass
 
 def handle_hotkey():
     global last_hotkey_time, window_open
@@ -154,37 +177,26 @@ if __name__ == "__main__":
     except:
         pass
     
-    # Check for lock file to prevent multiple instances
-    lock_file = os.path.join(get_runtime_data_dir(), "app.lock")
-    if os.path.exists(lock_file):
-        # Check if the process is actually running
-        try:
-            with open(lock_file, 'r') as f:
-                old_pid = int(f.read().strip())
-            
-            # Try to check if process is still running (Windows)
-            try:
-                import psutil
-                if psutil.pid_exists(old_pid):
-                    print("Application already running! Please close the existing instance first.")
-                    sys.exit(1)
-                else:
-                    print("Removing stale lock file...")
-                    os.remove(lock_file)
-            except ImportError:
-                # psutil not available, remove old lock file
-                print("Removing stale lock file...")
-                os.remove(lock_file)
-        except:
-            # Invalid lock file, remove it
-            os.remove(lock_file)
-    
-    # Create lock file
+    # Acquire single-instance lock.
+    instance_lock_handle = acquire_single_instance_lock()
+    if instance_lock_handle is None:
+        print("Application already running! Please close the existing instance first.")
+        sys.exit(1)
+
     try:
-        with open(lock_file, 'w') as f:
-            f.write(str(os.getpid()))
-        
         settings = load_settings()
+
+        # Hard gate: onboarding must complete before app runs (except in dev mode).
+        if not DEV_MODE and not is_onboarding_complete(settings):
+            print("First-time setup required. Opening onboarding wizard...")
+            setup_root = tk.Tk()
+            setup_root.withdraw()
+            completed = run_onboarding_wizard(setup_root)
+            setup_root.destroy()
+            if not completed:
+                print("Onboarding not completed. Exiting...")
+                sys.exit(1)
+            settings = load_settings()
 
         # One-time startup notice so users know the app lives in the tray.
         if not settings.get("tray_notice_shown", False):
@@ -199,18 +211,6 @@ if __name__ == "__main__":
             notice_root.destroy()
             settings["tray_notice_shown"] = True
             save_settings(settings)
-        
-        # Hard gate: onboarding must complete before app runs (except in dev mode).
-        if not DEV_MODE and not is_onboarding_complete(settings):
-            print("First-time setup required. Opening onboarding wizard...")
-            setup_root = tk.Tk()
-            setup_root.withdraw()
-            completed = run_onboarding_wizard(setup_root)
-            setup_root.destroy()
-            if not completed:
-                print("Onboarding not completed. Exiting...")
-                sys.exit(1)
-            settings = load_settings()
 
         keys = get_api_keys()
         
@@ -237,23 +237,20 @@ if __name__ == "__main__":
         if keys["groq"]:
             print("[OK] Groq API key configured")
         
-        # Start system tray icon in a separate thread
-        tray_thread = threading.Thread(target=run_tray_icon, daemon=True)
-        tray_thread.start()
-        
-        # Register hotkey
-        keyboard.add_hotkey(hotkey, handle_hotkey)
-        
-        # Keep the main thread alive
-        try:
-            keyboard.wait()
-        except KeyboardInterrupt:
-            pass
+        # Keep Tk interactions on the main thread by running tray loop here.
+        hotkey_thread = threading.Thread(target=run_hotkey_listener, args=(hotkey,), daemon=True)
+        hotkey_thread.start()
+        run_tray_icon()
         
     finally:
         # Clean up
         if tray_icon:
             tray_icon.stop()
         keyboard.unhook_all()
-        if os.path.exists(lock_file):
-            os.remove(lock_file)
+        if instance_lock_handle:
+            try:
+                instance_lock_handle.seek(0)
+                msvcrt.locking(instance_lock_handle.fileno(), msvcrt.LK_UNLCK, 1)
+            except OSError:
+                pass
+            instance_lock_handle.close()

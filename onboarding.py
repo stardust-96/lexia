@@ -67,7 +67,7 @@ def run_onboarding_wizard(parent=None):
 
     def update_buttons():
         back_btn.config(state="normal" if step["index"] > 0 else "disabled")
-        next_btn.config(text="Finish" if step["index"] == 2 else "Next")
+        next_btn.config(text="Finish" if step["index"] == 3 else "Next")
 
     def render_welcome():
         title_label.config(text="Welcome to Lexia")
@@ -108,7 +108,7 @@ def run_onboarding_wizard(parent=None):
 
     def render_model():
         title_label.config(text="Step 2: Default Model")
-        body_label.config(text="Choose the default model, then click Finish. Only models with configured keys are enabled.")
+        body_label.config(text="Choose the default model. Only models with configured keys are enabled.")
 
         keys = key_presence()
         openai_ok = bool(keys["openai"])
@@ -141,14 +141,40 @@ def run_onboarding_wizard(parent=None):
             elif groq_ok:
                 model_var.set("llama-4-scout")
 
+    def render_review():
+        title_label.config(text="Step 3: Review")
+        keys = key_presence()
+        key_summary = []
+        if keys["openai"]:
+            key_summary.append("OpenAI key: configured")
+        if keys["groq"]:
+            key_summary.append("Groq key: configured")
+
+        if model_var.get() == "gpt-4":
+            model_name = "GPT-4 (OpenAI)"
+        elif model_var.get() == "llama-4-scout":
+            model_name = "Llama-4-Scout (Groq)"
+        else:
+            model_name = "Not selected"
+
+        body_label.config(
+            text=(
+                "Review your setup before finishing:\n\n"
+                + "\n".join(key_summary if key_summary else ["No keys configured"])
+                + f"\nDefault model: {model_name}"
+            )
+        )
+
     def render():
         clear_form()
         if step["index"] == 0:
             render_welcome()
         elif step["index"] == 1:
             render_keys()
-        else:
+        elif step["index"] == 2:
             render_model()
+        else:
+            render_review()
         update_buttons()
 
     def do_finish():
@@ -180,10 +206,24 @@ def run_onboarding_wizard(parent=None):
         if step["index"] == 0:
             step["index"] = 1
         elif step["index"] == 1:
+            if not keyring_available():
+                messagebox.showerror(
+                    "Credential Store Unavailable",
+                    "Lexia cannot complete setup without keyring support.\n\n"
+                    "Install dependency: pip install keyring\n"
+                    "Then restart setup."
+                )
+                return
             if not openai_var.get().strip() and not groq_var.get().strip():
                 messagebox.showwarning("API Key Required", "Add at least one API key to continue.")
                 return
             step["index"] = 2
+        elif step["index"] == 2:
+            valid, msg = is_valid_state()
+            if not valid:
+                messagebox.showwarning("Setup Incomplete", msg)
+                return
+            step["index"] = 3
         else:
             do_finish()
             return

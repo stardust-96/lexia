@@ -49,4 +49,49 @@ Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: st
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{cmd}"; Parameters: "/C taskkill /f /im {#MyAppExeName}"; Flags: runhidden
+Filename: "{cmd}"; Parameters: "/C taskkill /f /im {#MyAppExeName}"; Flags: runhidden; RunOnceId: "KillLexiaProcess"
+
+[Code]
+var
+  RemoveUserDataOnUninstall: Boolean;
+
+function RunHiddenCmd(const CommandLine: string): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(
+    ExpandConstant('{cmd}'),
+    '/C ' + CommandLine,
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
+end;
+
+procedure InitializeUninstallProgressForm();
+begin
+  RemoveUserDataOnUninstall :=
+    MsgBox(
+      'Do you also want to remove local Lexia data and stored API keys?' + #13#10 + #13#10 +
+      'This removes:' + #13#10 +
+      '- %LOCALAPPDATA%\Lexia settings' + #13#10 +
+      '- Stored OpenAI/Groq credentials from Windows Credential Manager',
+      mbConfirmation,
+      MB_YESNO
+    ) = IDYES;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if (CurUninstallStep = usUninstall) and RemoveUserDataOnUninstall then
+  begin
+    DelTree(ExpandConstant('{localappdata}\Lexia'), True, True, True);
+
+    { Remove keyring-stored credentials (best effort; ignore failures). }
+    RunHiddenCmd('cmdkey /delete:Lexia/openai_api_key >nul 2>&1');
+    RunHiddenCmd('cmdkey /delete:Lexia/groq_api_key >nul 2>&1');
+    RunHiddenCmd('cmdkey /delete:Lexia:openai_api_key >nul 2>&1');
+    RunHiddenCmd('cmdkey /delete:Lexia:groq_api_key >nul 2>&1');
+  end;
+end;
