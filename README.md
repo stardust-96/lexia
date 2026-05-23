@@ -10,13 +10,12 @@ A powerful desktop application that provides intelligent text rewriting with cus
 
 ### **🎯 Super Easy Installation (Recommended)**
 1. Go to [Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. Download the **signed** `Lexia.exe` asset from the latest release
-3. (Optional) Also download the zip package if you prefer bundled docs
-4. If you downloaded zip, extract it to any folder
-5. Run `Lexia.exe`
-6. **First-time setup wizard opens automatically**
-7. Enter your API keys in the GUI (no file editing!)
-8. Start rewriting with `Ctrl+Shift+R`!
+2. Download the **signed** `Lexia-Setup-<version>.exe` installer
+3. Run the installer and complete setup
+4. Launch Lexia from Start Menu or Desktop shortcut
+5. **First-time setup wizard opens automatically**
+6. Enter your API keys in the GUI (no file editing!)
+7. Start rewriting with `Ctrl+Shift+R`!
 
 **✨ No Python installation, no config files, no technical setup required!**
 
@@ -65,11 +64,12 @@ python main.py
 
 ### **🎯 Windows Executable (Recommended - Super Easy!)**
 1. **Download** the latest release from [GitHub Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. **Download** the signed `Lexia.exe` release asset
-3. **Run** `Lexia.exe`
-4. **🎨 First-time setup opens automatically**
-5. **Enter your API keys** in the professional GUI interface
-6. **Done!** No config files, no command line needed
+2. **Download** the signed `Lexia-Setup-<version>.exe` installer
+3. **Run** the installer
+4. **Launch** Lexia from Start Menu/Desktop shortcut
+5. **🎨 First-time setup opens automatically**
+6. **Enter your API keys** in the professional GUI interface
+7. **Done!** No config files, no command line needed
 
 ### **💻 From Source (Developers)**
 
@@ -257,7 +257,7 @@ lexia/
    - **Chrome/Edge**: Click "Keep" when downloading
    - **Windows Defender**: Click "More info" → "Run anyway"
    - **Add exclusion**: Add Lexia folder to antivirus exclusions
-   - **Why this happens**: Unsigned executables trigger heuristic detection
+   - **Why this happens**: Unsigned binaries (or newly signed binaries without reputation) can trigger heuristic detection
 
 ### **🆘 Getting Help**
 
@@ -294,13 +294,36 @@ Mock responses are clearly prefixed with `[DEV MOCK - ...]`.
 
 ### **Creating Releases**
 ```bash
-# Update version in version.py
+# Update version in version.py (and version_info.py if needed)
 # Create and push tag
 git tag v1.0.1
 git push origin v1.0.1
 
 # GitHub Actions automatically builds and releases
 ```
+
+### **Signed Windows Release (Recommended)**
+For production releases, publish locally signed Windows artifacts.
+
+1. Build locally:
+   ```powershell
+   .\leo\Scripts\python.exe build.py
+   ```
+2. Build installer:
+   ```powershell
+   & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\installer.iss"
+   ```
+3. Sign and verify executable + installer:
+   ```powershell
+   signtool sign /fd SHA256 /td SHA256 /tr http://time.certum.pl /n "Open Source Developer, Muhammad Jawad Bashir" "dist\Lexia.exe"
+   signtool verify /pa "dist\Lexia.exe"
+   signtool sign /fd SHA256 /td SHA256 /tr http://time.certum.pl /n "Open Source Developer, Muhammad Jawad Bashir" "dist\Lexia-Setup-<version>.exe"
+   signtool verify /pa "dist\Lexia-Setup-<version>.exe"
+   ```
+4. Create GitHub Release and upload signed installer:
+   - `dist\Lexia-Setup-<version>.exe`
+
+> Note: CI workflow artifacts are unsigned unless signing is explicitly configured in CI.
 
 ## 🤝 Contributing
 
