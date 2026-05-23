@@ -28,6 +28,17 @@ window_open = False
 tray_icon = None
 DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
+
+def get_runtime_data_dir():
+    """Return a per-user writable directory for runtime files."""
+    local_app_data = os.getenv("LOCALAPPDATA")
+    if local_app_data:
+        runtime_dir = os.path.join(local_app_data, "Lexia")
+    else:
+        runtime_dir = os.path.join(os.path.expanduser("~"), ".lexia")
+    os.makedirs(runtime_dir, exist_ok=True)
+    return runtime_dir
+
 def create_icon_image():
     """Create a simple icon for the system tray"""
     # Create a 64x64 image with a white background
@@ -46,7 +57,7 @@ def quit_app(icon, item):
     icon.stop()
     keyboard.unhook_all()
     # Clean up lock file
-    lock_file = "app.lock"
+    lock_file = os.path.join(get_runtime_data_dir(), "app.lock")
     if os.path.exists(lock_file):
         os.remove(lock_file)
     os._exit(0)
@@ -141,7 +152,7 @@ if __name__ == "__main__":
         pass
     
     # Check for lock file to prevent multiple instances
-    lock_file = "app.lock"
+    lock_file = os.path.join(get_runtime_data_dir(), "app.lock")
     if os.path.exists(lock_file):
         # Check if the process is actually running
         try:
