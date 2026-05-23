@@ -209,8 +209,13 @@ if __name__ == "__main__":
         
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         
-        model_name = settings.get('model', 'gpt-4')
-        display_name = "GPT-4 (OpenAI)" if model_name == "gpt-4" else "Llama-4-Scout (Groq)"
+        model_name = settings.get('model', '')
+        if model_name == "gpt-4":
+            display_name = "GPT-4 (OpenAI)"
+        elif model_name == "llama-4-scout":
+            display_name = "Llama-4-Scout (Groq)"
+        else:
+            display_name = "Not Set"
         
         print("Lexia running...")
         if DEV_MODE:

@@ -32,7 +32,7 @@ def rewrite_text_with_gpt(original_text: str, tone: str = "Neutral", num_alterna
     settings = load_settings()
     if num_alternatives is None:
         num_alternatives = settings.get("num_alternatives", 3)
-    model = model_override if model_override else settings.get("model", "gpt-4")
+    model = model_override if model_override else settings.get("model", "")
     temperature = settings.get("temperature", 0.7)
     
     if not original_text.strip():
@@ -52,6 +52,14 @@ def rewrite_text_with_gpt(original_text: str, tone: str = "Neutral", num_alterna
 
     # Get API clients
     openai_client, groq_client = get_clients()
+
+    if not model:
+        if openai_client:
+            model = "gpt-4"
+        elif groq_client:
+            model = "llama-4-scout"
+        else:
+            return ["Error: No API key configured. Please add an API key in Settings → API Keys."]
     
     # Check if we have the required client for the selected model
     if model == "llama-4-scout" and not groq_client:

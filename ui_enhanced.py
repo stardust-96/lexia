@@ -306,7 +306,12 @@ def show_popup(original: str):
     help_menu.add_command(label="About", command=lambda: show_about_dialog(popup))
     
     settings = load_settings()
-    model_display = "GPT-4 (OpenAI)" if settings['model'] == "gpt-4" else "Llama-4-Scout (Groq)"
+    if settings.get('model') == "gpt-4":
+        model_display = "GPT-4 (OpenAI)"
+    elif settings.get('model') == "llama-4-scout":
+        model_display = "Llama-4-Scout (Groq)"
+    else:
+        model_display = "Not Set"
     help_menu.add_command(label=f"Model: {model_display}", state='disabled')
     model_menu_index = help_menu.index("end")
     help_menu.add_command(label=f"Temperature: {settings['temperature']}", state='disabled')
@@ -316,7 +321,12 @@ def show_popup(original: str):
     
     def update_model_settings(new_settings):
         # Update help menu with new settings
-        model_display = "GPT-4 (OpenAI)" if new_settings['model'] == "gpt-4" else "Llama-4-Scout (Groq)"
+        if new_settings.get('model') == "gpt-4":
+            model_display = "GPT-4 (OpenAI)"
+        elif new_settings.get('model') == "llama-4-scout":
+            model_display = "Llama-4-Scout (Groq)"
+        else:
+            model_display = "Not Set"
         help_menu.entryconfig(model_menu_index, label=f"Model: {model_display}")
         help_menu.entryconfig(temperature_menu_index, label=f"Temperature: {new_settings['temperature']}")
         help_menu.entryconfig(alternatives_menu_index, label=f"Alternatives: {new_settings['num_alternatives']}")
@@ -338,15 +348,20 @@ def show_popup(original: str):
     model_card = ttk.LabelFrame(selection_frame, text="🚀 Model Selection", style='Card.TLabelframe', padding=15)
     model_card.pack(side=tk.LEFT, padx=10, fill=tk.BOTH, expand=True)
     
-    model_var = tk.StringVar(value=settings.get('model', 'gpt-4'))
+    model_var = tk.StringVar(value=settings.get('model', ''))
     model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
     keys = get_api_keys()
     openai_available = DEV_MODE or bool(keys.get("openai"))
     groq_available = DEV_MODE or bool(keys.get("groq"))
 
-    # If saved default model is unavailable, fallback to an available one.
+    # If default model is unset/unavailable, fallback to an available one for this popup session.
     if not DEV_MODE:
-        if model_var.get() == "gpt-4" and not openai_available and groq_available:
+        if not model_var.get():
+            if openai_available:
+                model_var.set("gpt-4")
+            elif groq_available:
+                model_var.set("llama-4-scout")
+        elif model_var.get() == "gpt-4" and not openai_available and groq_available:
             model_var.set("llama-4-scout")
         elif model_var.get() == "llama-4-scout" and not groq_available and openai_available:
             model_var.set("gpt-4")

@@ -66,16 +66,17 @@ def show_settings_window(parent=None, on_settings_changed=None):
     model_frame.pack(pady=5)
 
     tk.Label(model_frame, text="Default Model:").pack(side=tk.LEFT, padx=5)
-    model_var = tk.StringVar(value=settings.get("model", "gpt-4"))
+    model_var = tk.StringVar(value=settings.get("model", ""))
     model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
+    model_labels = ["Select model"] + [label for _, label in model_options]
     model_dropdown = ttk.Combobox(
         model_frame,
         textvariable=model_var,
-        values=[label for _, label in model_options],
+        values=model_labels,
         state='readonly',
         width=24
     )
-    selected_label = next((label for value, label in model_options if value == model_var.get()), "GPT-4 (OpenAI)")
+    selected_label = next((label for value, label in model_options if value == model_var.get()), "Select model")
     model_dropdown.set(selected_label)
     model_dropdown.pack(side=tk.LEFT, padx=5)
     
@@ -243,8 +244,14 @@ def show_settings_window(parent=None, on_settings_changed=None):
                                  "• Groq: https://console.groq.com/keys")
             return
 
-        selected_model = next((value for value, label in model_options if label == model_dropdown.get()), "gpt-4")
+        selected_model = next((value for value, label in model_options if label == model_dropdown.get()), "")
         if not DEV_MODE:
+            if not selected_model:
+                messagebox.showwarning(
+                    "Default Model Required",
+                    "Please select a default model after adding an API key."
+                )
+                return
             if selected_model == "gpt-4" and not openai_key:
                 messagebox.showwarning(
                     "Model Requires OpenAI Key",

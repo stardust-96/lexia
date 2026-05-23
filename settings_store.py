@@ -1,22 +1,36 @@
 import binascii
 import json
 import os
+from pathlib import Path
 
 try:
     import keyring
 except ImportError:
     keyring = None
 
-SETTINGS_FILE = "settings.json"
 KEYRING_SERVICE = "Lexia"
 DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
 DEFAULT_SETTINGS = {
     "hotkey": "ctrl+shift+r",
-    "model": "gpt-4",
+    "model": "",
     "temperature": 0.7,
     "num_alternatives": 3,
 }
+
+
+def _get_runtime_data_dir():
+    local_app_data = os.getenv("LOCALAPPDATA")
+    if local_app_data:
+        runtime_dir = Path(local_app_data) / "Lexia"
+    else:
+        runtime_dir = Path.home() / ".lexia"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    return runtime_dir
+
+
+SETTINGS_FILE = _get_runtime_data_dir() / "settings.json"
+LEGACY_SETTINGS_FILE = Path("settings.json")
 
 
 def _decode_legacy_key(value):
@@ -42,6 +56,35 @@ def _get_key_from_keyring(name):
 def _set_key_in_keyring(name, value):
     if keyring is None:
         return False
+
+
+def _pick_first_available_model(openai_key, groq_key):
+    if openai_key:
+        return "gpt-4"
+    if groq_key:
+        return "llama-4-scout"
+    return ""
+
+
+def _normalize_model(settings, openai_key, groq_key):
+    model = settings.get("model", "")
+    has_openai = bool(openai_key)
+    has_groq = bool(groq_key)
+
+    if not has_openai and not has_groq:
+        settings["model"] = ""
+        return
+
+    if not model:
+        settings["model"] = _pick_first_available_model(openai_key, groq_key)
+        return
+
+    if model == "gpt-4" and not has_openai:
+        settings["model"] = _pick_first_available_model(openai_key, groq_key)
+    elif model == "llama-4-scout" and not has_groq:
+        settings["model"] = _pick_first_available_model(openai_key, groq_key)
+    elif model not in ("gpt-4", "llama-4-scout"):
+        settings["model"] = _pick_first_available_model(openai_key, groq_key)
     try:
         if value:
             keyring.set_password(KEYRING_SERVICE, name, value)
@@ -68,7 +111,9 @@ def save_settings(settings):
             print("Error saving Groq API key to keychain")
             return False
 
-        with open(SETTINGS_FILE, "w") as f:
+        _normalize_model(settings_to_save, openai_key, groq_key)
+
+        with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings_to_save, f, indent=2)
         return True
     except (OSError, TypeError, ValueError) as e:
@@ -77,9 +122,15 @@ def save_settings(settings):
 
 
 def load_settings():
+    if not SETTINGS_FILE.exists() and LEGACY_SETTINGS_FILE.exists():
+        try:
+            LEGACY_SETTINGS_FILE.replace(SETTINGS_FILE)
+        except OSError:
+            pass
+
     if os.path.exists(SETTINGS_FILE):
         try:
-            with open(SETTINGS_FILE, "r") as f:
+            with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
                 settings = json.load(f)
 
             migrated = False
@@ -94,7 +145,7 @@ def load_settings():
                 migrated = True
 
             if migrated:
-                with open(SETTINGS_FILE, "w") as f:
+                with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
                     json.dump(settings, f, indent=2)
 
             for key, value in DEFAULT_SETTINGS.items():
@@ -103,6 +154,7 @@ def load_settings():
 
             settings["openai_api_key"] = _get_key_from_keyring("openai_api_key")
             settings["groq_api_key"] = _get_key_from_keyring("groq_api_key")
+            _normalize_model(settings, settings["openai_api_key"], settings["groq_api_key"])
             return settings
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             return DEFAULT_SETTINGS.copy()
