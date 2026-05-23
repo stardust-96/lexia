@@ -20,24 +20,49 @@ def run_onboarding_wizard(parent=None):
 
     wizard = tk.Toplevel(parent) if parent else tk.Tk()
     wizard.title("Lexia Setup Wizard")
-    wizard.geometry("620x420")
-    wizard.resizable(False, False)
+    wizard.geometry("700x560")
+    wizard.minsize(620, 500)
+    wizard.resizable(True, True)
     wizard.protocol("WM_DELETE_WINDOW", lambda: None)
+    wizard.grid_rowconfigure(0, weight=1)
+    wizard.grid_columnconfigure(0, weight=1)
 
-    container = tk.Frame(wizard, padx=20, pady=20)
-    container.pack(fill=tk.BOTH, expand=True)
+    container = tk.Frame(wizard, padx=16, pady=16)
+    container.grid(row=0, column=0, sticky="nsew")
+    container.grid_rowconfigure(2, weight=1)
+    container.grid_columnconfigure(0, weight=1)
 
     title_label = tk.Label(container, text="Welcome to Lexia", font=("Arial", 16, "bold"))
-    title_label.pack(anchor=tk.W, pady=(0, 10))
+    title_label.grid(row=0, column=0, sticky="w", pady=(0, 8))
 
     body_label = tk.Label(container, text="", justify=tk.LEFT, wraplength=560, font=("Arial", 10))
-    body_label.pack(anchor=tk.W, fill=tk.X)
+    body_label.grid(row=1, column=0, sticky="ew")
 
-    form_frame = tk.Frame(container)
-    form_frame.pack(fill=tk.BOTH, expand=True, pady=(15, 0))
+    content_holder = tk.Frame(container)
+    content_holder.grid(row=2, column=0, sticky="nsew", pady=(12, 0))
+    content_holder.grid_rowconfigure(0, weight=1)
+    content_holder.grid_columnconfigure(0, weight=1)
+
+    form_canvas = tk.Canvas(content_holder, highlightthickness=0)
+    form_scrollbar = ttk.Scrollbar(content_holder, orient="vertical", command=form_canvas.yview)
+    form_frame = tk.Frame(form_canvas)
+
+    form_frame.bind(
+        "<Configure>",
+        lambda e: form_canvas.configure(scrollregion=form_canvas.bbox("all"))
+    )
+    form_canvas.bind(
+        "<Configure>",
+        lambda e: form_canvas.itemconfigure("form_window", width=e.width)
+    )
+    form_canvas.create_window((0, 0), window=form_frame, anchor="nw", tags="form_window")
+    form_canvas.configure(yscrollcommand=form_scrollbar.set)
+
+    form_canvas.grid(row=0, column=0, sticky="nsew")
+    form_scrollbar.grid(row=0, column=1, sticky="ns")
 
     button_row = tk.Frame(container)
-    button_row.pack(fill=tk.X, pady=(10, 0))
+    button_row.grid(row=3, column=0, sticky="ew", pady=(12, 0))
 
     back_btn = tk.Button(button_row, text="Back", width=10)
     back_btn.pack(side=tk.LEFT)
@@ -56,6 +81,7 @@ def run_onboarding_wizard(parent=None):
     def clear_form():
         for child in form_frame.winfo_children():
             child.destroy()
+        form_canvas.yview_moveto(0.0)
 
     def key_presence():
         return {"openai": openai_var.get().strip(), "groq": groq_var.get().strip()}
