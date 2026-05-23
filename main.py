@@ -201,11 +201,11 @@ if __name__ == "__main__":
             # Reload settings after setup
             settings = load_settings()
             keys = get_api_keys()
-            
-            # Check again if keys were added
+
+            # If keys are still missing, keep app running in locked mode.
             if not keys["openai"] and not keys["groq"]:
-                print("No API keys configured. Exiting...")
-                sys.exit(1)
+                print("No API keys configured yet.")
+                print("Rewrite UI will stay disabled until you add at least one key in Settings.")
         
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         

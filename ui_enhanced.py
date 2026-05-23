@@ -147,8 +147,18 @@ def show_about_dialog(parent):
              padx=35, pady=8, relief=tk.RAISED, bd=2).pack(pady=5)
 
 def show_popup(original: str):
+    def has_any_api_key():
+        keys_local = get_api_keys()
+        return DEV_MODE or bool(keys_local.get("openai")) or bool(keys_local.get("groq"))
+
     def start_rewrite():
         global is_rewriting
+        if not has_any_api_key():
+            loading_label.config(
+                text="API key required. Open Settings to continue.",
+                fg="#b00020"
+            )
+            return
         if is_rewriting:
             return  # Prevent multiple simultaneous rewrites
         
@@ -423,6 +433,60 @@ def show_popup(original: str):
                              relief="raised", bd=2, padx=20, pady=8)
     cancel_button.pack(side=tk.LEFT, padx=5)
 
+    def open_settings_and_refresh():
+        show_settings_window(popup, update_model_settings)
+        refreshed_keys = get_api_keys()
+        refreshed_openai = DEV_MODE or bool(refreshed_keys.get("openai"))
+        refreshed_groq = DEV_MODE or bool(refreshed_keys.get("groq"))
+
+        for child in model_card.winfo_children():
+            if isinstance(child, tk.Radiobutton):
+                text = child.cget("text")
+                if "GPT-4" in text:
+                    child.config(state='normal' if refreshed_openai else 'disabled')
+                elif "Llama-4-Scout" in text:
+                    child.config(state='normal' if refreshed_groq else 'disabled')
+
+        # If current model is unavailable, move to the available one
+        if model_var.get() == "gpt-4" and not refreshed_openai and refreshed_groq:
+            model_var.set("llama-4-scout")
+        elif model_var.get() == "llama-4-scout" and not refreshed_groq and refreshed_openai:
+            model_var.set("gpt-4")
+
+        if has_any_api_key():
+            settings_prompt_label.config(text="")
+            settings_button.config(state='disabled')
+            submit_button.config(state='normal')
+            start_rewrite()
+        else:
+            settings_prompt_label.config(text="Add at least one API key to enable rewriting.")
+            settings_button.config(state='normal')
+            submit_button.config(state='disabled')
+            loading_label.config(text="API key required. Open Settings to continue.", fg="#b00020")
+
+    settings_button = tk.Button(
+        button_frame,
+        text="⚙ Settings",
+        command=open_settings_and_refresh,
+        bg="#7f8c8d",
+        fg="white",
+        font=("Arial", 11, "bold"),
+        relief="raised",
+        bd=2,
+        padx=20,
+        pady=8
+    )
+    settings_button.pack(side=tk.LEFT, padx=5)
+
+    settings_prompt_label = tk.Label(
+        bottom_frame,
+        text="",
+        font=("Arial", 9),
+        fg="#b00020",
+        bg="#f5f5f5"
+    )
+    settings_prompt_label.pack(pady=(6, 0))
+
     # Main content frame - now pack after bottom frame
     content_frame = tk.Frame(popup, bg="#f5f5f5")
     content_frame.pack(fill=tk.BOTH, expand=True, padx=15)
@@ -458,5 +522,10 @@ def show_popup(original: str):
 
     # Buttons are now created above in the proper order
 
-    start_rewrite()
+    if has_any_api_key():
+        start_rewrite()
+    else:
+        submit_button.config(state='disabled')
+        settings_prompt_label.config(text="Add at least one API key to enable rewriting.")
+        loading_label.config(text="API key required. Open Settings to continue.", fg="#b00020")
     popup.mainloop()
