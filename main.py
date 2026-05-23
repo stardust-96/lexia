@@ -22,6 +22,8 @@ from PIL import Image, ImageDraw
 from ui_enhanced import show_popup
 from settings import load_settings, get_api_keys, show_settings_window
 import tkinter as tk
+from tkinter import messagebox
+from settings_store import save_settings
 
 last_hotkey_time = 0
 window_open = False
@@ -182,6 +184,20 @@ if __name__ == "__main__":
             f.write(str(os.getpid()))
         
         settings = load_settings()
+
+        # One-time startup notice so users know the app lives in the tray.
+        if not settings.get("tray_notice_shown", False):
+            notice_root = tk.Tk()
+            notice_root.withdraw()
+            messagebox.showinfo(
+                "Lexia is Running",
+                "Lexia runs in the system tray.\n\n"
+                "Use Ctrl+Shift+R to open rewrite window.\n"
+                "Right-click the tray icon for Settings and Quit."
+            )
+            notice_root.destroy()
+            settings["tray_notice_shown"] = True
+            save_settings(settings)
         
         # Check for API keys on first run (skip in development mode)
         keys = get_api_keys()
@@ -189,23 +205,31 @@ if __name__ == "__main__":
             print("Welcome to Lexia!")
             print("First-time setup: Please configure your API keys...")
             print("Opening settings window...")
-            
-            # Show settings window for first-time setup
-            import tkinter as tk
-            root = tk.Tk()
-            root.withdraw()  # Hide the root window
-            win = show_settings_window(root)
-            root.wait_window(win)
-            root.destroy()
-            
-            # Reload settings after setup
-            settings = load_settings()
-            keys = get_api_keys()
 
-            # If keys are still missing, keep app running in locked mode.
-            if not keys["openai"] and not keys["groq"]:
-                print("No API keys configured yet.")
-                print("Rewrite UI will stay disabled until you add at least one key in Settings.")
+            while not keys["openai"] and not keys["groq"]:
+                root = tk.Tk()
+                root.withdraw()
+                win = show_settings_window(root)
+                root.wait_window(win)
+                root.destroy()
+
+                settings = load_settings()
+                keys = get_api_keys()
+                if keys["openai"] or keys["groq"]:
+                    break
+
+                prompt_root = tk.Tk()
+                prompt_root.withdraw()
+                open_settings_again = messagebox.askyesno(
+                    "API Key Required",
+                    "At least one API key is required to use Lexia.\n\n"
+                    "Click Yes to open Settings again.\n"
+                    "Click No to exit Lexia."
+                )
+                prompt_root.destroy()
+                if not open_settings_again:
+                    print("No API keys configured. Exiting...")
+                    sys.exit(1)
         
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         
