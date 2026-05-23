@@ -1,4 +1,4 @@
-# Lexia ✨
+# <img src="https://raw.githubusercontent.com/stardust-96/lexia/main/lexia.ico" width="28" /> Lexia 
 
 A powerful desktop application that provides intelligent text rewriting with customizable styles and AI models. Similar to Grammarly but with more flexibility and AI model options.
 
