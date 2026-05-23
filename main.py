@@ -23,7 +23,8 @@ from ui_enhanced import show_popup
 from settings import load_settings, get_api_keys, show_settings_window
 import tkinter as tk
 from tkinter import messagebox
-from settings_store import save_settings
+from settings_store import save_settings, is_onboarding_complete
+from onboarding import run_onboarding_wizard
 
 last_hotkey_time = 0
 window_open = False
@@ -199,37 +200,19 @@ if __name__ == "__main__":
             settings["tray_notice_shown"] = True
             save_settings(settings)
         
-        # Check for API keys on first run (skip in development mode)
+        # Hard gate: onboarding must complete before app runs (except in dev mode).
+        if not DEV_MODE and not is_onboarding_complete(settings):
+            print("First-time setup required. Opening onboarding wizard...")
+            setup_root = tk.Tk()
+            setup_root.withdraw()
+            completed = run_onboarding_wizard(setup_root)
+            setup_root.destroy()
+            if not completed:
+                print("Onboarding not completed. Exiting...")
+                sys.exit(1)
+            settings = load_settings()
+
         keys = get_api_keys()
-        if not DEV_MODE and not keys["openai"] and not keys["groq"]:
-            print("Welcome to Lexia!")
-            print("First-time setup: Please configure your API keys...")
-            print("Opening settings window...")
-
-            while not keys["openai"] and not keys["groq"]:
-                root = tk.Tk()
-                root.withdraw()
-                win = show_settings_window(root)
-                root.wait_window(win)
-                root.destroy()
-
-                settings = load_settings()
-                keys = get_api_keys()
-                if keys["openai"] or keys["groq"]:
-                    break
-
-                prompt_root = tk.Tk()
-                prompt_root.withdraw()
-                open_settings_again = messagebox.askyesno(
-                    "API Key Required",
-                    "At least one API key is required to use Lexia.\n\n"
-                    "Click Yes to open Settings again.\n"
-                    "Click No to exit Lexia."
-                )
-                prompt_root.destroy()
-                if not open_settings_again:
-                    print("No API keys configured. Exiting...")
-                    sys.exit(1)
         
         hotkey = settings.get("hotkey", "ctrl+shift+r")
         

@@ -8,6 +8,7 @@ import urllib.request
 import os
 from rewriter import rewrite_text_with_gpt
 from settings import show_settings_window, load_settings, get_api_keys
+from settings_store import is_onboarding_complete
 from version import VERSION_INFO, get_version_string
 
 selected_tone = "Neutral"
@@ -151,11 +152,18 @@ def show_popup(original: str):
         keys_local = get_api_keys()
         return DEV_MODE or bool(keys_local.get("openai")) or bool(keys_local.get("groq"))
 
+    def can_rewrite():
+        if DEV_MODE:
+            return True
+        if not has_any_api_key():
+            return False
+        return is_onboarding_complete(load_settings())
+
     def start_rewrite():
         global is_rewriting
-        if not has_any_api_key():
+        if not can_rewrite():
             loading_label.config(
-                text="API key required. Open Settings to continue.",
+                text="Setup required. Open Settings to continue.",
                 fg="#b00020"
             )
             return
@@ -468,16 +476,16 @@ def show_popup(original: str):
         elif model_var.get() == "llama-4-scout" and not refreshed_groq and refreshed_openai:
             model_var.set("gpt-4")
 
-        if has_any_api_key():
+        if can_rewrite():
             settings_prompt_label.config(text="")
             settings_button.config(state='disabled')
             submit_button.config(state='normal')
             start_rewrite()
         else:
-            settings_prompt_label.config(text="Add at least one API key to enable rewriting.")
+            settings_prompt_label.config(text="Complete setup in Settings to enable rewriting.")
             settings_button.config(state='normal')
             submit_button.config(state='disabled')
-            loading_label.config(text="API key required. Open Settings to continue.", fg="#b00020")
+            loading_label.config(text="Setup required. Open Settings to continue.", fg="#b00020")
 
     settings_button = tk.Button(
         button_frame,
@@ -537,10 +545,10 @@ def show_popup(original: str):
 
     # Buttons are now created above in the proper order
 
-    if has_any_api_key():
+    if can_rewrite():
         start_rewrite()
     else:
         submit_button.config(state='disabled')
-        settings_prompt_label.config(text="Add at least one API key to enable rewriting.")
-        loading_label.config(text="API key required. Open Settings to continue.", fg="#b00020")
+        settings_prompt_label.config(text="Complete setup in Settings to enable rewriting.")
+        loading_label.config(text="Setup required. Open Settings to continue.", fg="#b00020")
     popup.mainloop()

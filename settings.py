@@ -271,7 +271,9 @@ def show_settings_window(parent=None, on_settings_changed=None):
             "temperature": temp_var.get(),
             "num_alternatives": alt_var.get(),
             "openai_api_key": openai_key,
-            "groq_api_key": groq_key
+            "groq_api_key": groq_key,
+            "onboarding_completed": settings.get("onboarding_completed", False),
+            "tray_notice_shown": settings.get("tray_notice_shown", False),
         }
         
         if save_settings(new_settings):

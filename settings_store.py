@@ -16,6 +16,8 @@ DEFAULT_SETTINGS = {
     "model": "",
     "temperature": 0.7,
     "num_alternatives": 3,
+    "onboarding_completed": False,
+    "tray_notice_shown": False,
 }
 
 
@@ -56,6 +58,17 @@ def _get_key_from_keyring(name):
 def _set_key_in_keyring(name, value):
     if keyring is None:
         return False
+    try:
+        if value:
+            keyring.set_password(KEYRING_SERVICE, name, value)
+        else:
+            try:
+                keyring.delete_password(KEYRING_SERVICE, name)
+            except Exception:
+                pass
+        return True
+    except Exception:
+        return False
 
 
 def _pick_first_available_model(openai_key, groq_key):
@@ -85,17 +98,29 @@ def _normalize_model(settings, openai_key, groq_key):
         settings["model"] = _pick_first_available_model(openai_key, groq_key)
     elif model not in ("gpt-4", "llama-4-scout"):
         settings["model"] = _pick_first_available_model(openai_key, groq_key)
-    try:
-        if value:
-            keyring.set_password(KEYRING_SERVICE, name, value)
-        else:
-            try:
-                keyring.delete_password(KEYRING_SERVICE, name)
-            except Exception:
-                pass
-        return True
-    except Exception:
-        return False
+
+
+def validate_onboarding_state(settings, keys):
+    has_openai = bool(keys.get("openai"))
+    has_groq = bool(keys.get("groq"))
+    model = settings.get("model", "")
+
+    if not has_openai and not has_groq:
+        return False, "At least one API key is required."
+    if model not in ("gpt-4", "llama-4-scout"):
+        return False, "Please select a default model."
+    if model == "gpt-4" and not has_openai:
+        return False, "Selected model requires OpenAI API key."
+    if model == "llama-4-scout" and not has_groq:
+        return False, "Selected model requires Groq API key."
+    return True, ""
+
+
+def is_onboarding_complete(settings=None):
+    settings_obj = settings if settings is not None else load_settings()
+    keys = get_api_keys()
+    valid, _ = validate_onboarding_state(settings_obj, keys)
+    return bool(settings_obj.get("onboarding_completed")) and valid
 
 
 def save_settings(settings):
@@ -112,6 +137,12 @@ def save_settings(settings):
             return False
 
         _normalize_model(settings_to_save, openai_key, groq_key)
+        effective_keys = {
+            "openai": openai_key if openai_key is not None else _get_key_from_keyring("openai_api_key"),
+            "groq": groq_key if groq_key is not None else _get_key_from_keyring("groq_api_key"),
+        }
+        valid_onboarding, _ = validate_onboarding_state(settings_to_save, effective_keys)
+        settings_to_save["onboarding_completed"] = valid_onboarding
 
         with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
             json.dump(settings_to_save, f, indent=2)
@@ -155,6 +186,16 @@ def load_settings():
             settings["openai_api_key"] = _get_key_from_keyring("openai_api_key")
             settings["groq_api_key"] = _get_key_from_keyring("groq_api_key")
             _normalize_model(settings, settings["openai_api_key"], settings["groq_api_key"])
+            valid_onboarding, _ = validate_onboarding_state(
+                settings,
+                {"openai": settings["openai_api_key"], "groq": settings["groq_api_key"]}
+            )
+            if valid_onboarding and not settings.get("onboarding_completed", False):
+                settings["onboarding_completed"] = True
+                save_settings(settings)
+            elif not valid_onboarding and settings.get("onboarding_completed", False):
+                settings["onboarding_completed"] = False
+                save_settings(settings)
             return settings
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             return DEFAULT_SETTINGS.copy()
