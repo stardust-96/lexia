@@ -38,6 +38,7 @@ Name: "startupicon"; Description: "Start {#MyAppName} when Windows starts"; Grou
 
 [Files]
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "lexia.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -55,20 +56,6 @@ Filename: "{cmd}"; Parameters: "/C taskkill /f /im {#MyAppExeName}"; Flags: runh
 var
   RemoveUserDataOnUninstall: Boolean;
 
-function RunHiddenCmd(const CommandLine: string): Boolean;
-var
-  ResultCode: Integer;
-begin
-  Result := Exec(
-    ExpandConstant('{cmd}'),
-    '/C ' + CommandLine,
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
-    ResultCode
-  );
-end;
-
 procedure InitializeUninstallProgressForm();
 begin
   RemoveUserDataOnUninstall :=
@@ -83,15 +70,21 @@ begin
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ResultCode: Integer;
 begin
   if (CurUninstallStep = usUninstall) and RemoveUserDataOnUninstall then
   begin
-    DelTree(ExpandConstant('{localappdata}\Lexia'), True, True, True);
+    if FileExists(ExpandConstant('{app}\{#MyAppExeName}')) then
+      Exec(
+        ExpandConstant('{app}\{#MyAppExeName}'),
+        '--cleanup-secrets',
+        '',
+        SW_HIDE,
+        ewWaitUntilTerminated,
+        ResultCode
+      );
 
-    { Remove keyring-stored credentials (best effort; ignore failures). }
-    RunHiddenCmd('cmdkey /delete:Lexia/openai_api_key >nul 2>&1');
-    RunHiddenCmd('cmdkey /delete:Lexia/groq_api_key >nul 2>&1');
-    RunHiddenCmd('cmdkey /delete:Lexia:openai_api_key >nul 2>&1');
-    RunHiddenCmd('cmdkey /delete:Lexia:groq_api_key >nul 2>&1');
+    DelTree(ExpandConstant('{localappdata}\Lexia'), True, True, True);
   end;
 end;

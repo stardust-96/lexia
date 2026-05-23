@@ -212,3 +212,17 @@ def get_api_keys():
 
 def keyring_available():
     return keyring is not None
+
+
+def clear_stored_api_keys():
+    """Best-effort removal of stored API credentials from keyring."""
+    if keyring is None:
+        return False
+
+    ok = True
+    for name in ("openai_api_key", "groq_api_key"):
+        try:
+            keyring.delete_password(KEYRING_SERVICE, name)
+        except Exception:
+            ok = False
+    return ok

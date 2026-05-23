@@ -24,8 +24,9 @@ from ui_enhanced import show_popup
 from settings import load_settings, get_api_keys, show_settings_window
 import tkinter as tk
 from tkinter import messagebox
-from settings_store import save_settings, is_onboarding_complete
+from settings_store import save_settings, is_onboarding_complete, clear_stored_api_keys
 from onboarding import run_onboarding_wizard
+from app_paths import get_icon_path, apply_window_icon
 
 last_hotkey_time = 0
 window_open = False
@@ -45,15 +46,18 @@ def get_runtime_data_dir():
     return runtime_dir
 
 def create_icon_image():
-    """Create a simple icon for the system tray"""
-    # Create a 64x64 image with a white background
+    """Load Lexia icon for tray; fallback to generated icon if unavailable."""
+    icon_path = get_icon_path()
+    if icon_path:
+        try:
+            return Image.open(icon_path)
+        except Exception:
+            pass
+
     img = Image.new('RGB', (64, 64), color='white')
     draw = ImageDraw.Draw(img)
-    
-    # Draw a blue 'L' for Lexia
     draw.rectangle([10, 10, 54, 54], fill='#2196F3')
     draw.text((22, 15), 'L', fill='white', font=None)
-    
     return img
 
 def quit_app(icon, item):
@@ -83,6 +87,7 @@ def show_settings(icon, item):
     """Show settings window from system tray"""
     root = tk.Tk()
     root.withdraw()
+    apply_window_icon(root)
     win = show_settings_window(root)
     root.wait_window(win)
     root.destroy()
@@ -92,6 +97,7 @@ def show_about(icon, item):
     from ui_enhanced import show_about_dialog
     root = tk.Tk()
     root.withdraw()
+    apply_window_icon(root)
     show_about_dialog(root)
     root.destroy()
 
@@ -170,6 +176,10 @@ def handle_hotkey():
         window_open = False  # Always reset state
 
 if __name__ == "__main__":
+    if "--cleanup-secrets" in sys.argv:
+        clear_stored_api_keys()
+        sys.exit(0)
+
     # Set process name for Task Manager
     try:
         import ctypes
@@ -202,6 +212,7 @@ if __name__ == "__main__":
         if not settings.get("tray_notice_shown", False):
             notice_root = tk.Tk()
             notice_root.withdraw()
+            apply_window_icon(notice_root)
             messagebox.showinfo(
                 "Lexia is Running",
                 "Lexia runs in the system tray.\n\n"
@@ -218,7 +229,7 @@ if __name__ == "__main__":
         
         model_name = settings.get('model', '')
         if model_name == "gpt-4":
-            display_name = "GPT-4 (OpenAI)"
+            display_name = "GPT (OpenAI)"
         elif model_name == "llama-4-scout":
             display_name = "Llama-4-Scout (Groq)"
         else:

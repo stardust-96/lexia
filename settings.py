@@ -1,18 +1,25 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import webbrowser
+import threading
 from settings_store import DEV_MODE, get_api_keys, keyring_available, load_settings, save_settings
+from app_paths import apply_window_icon
 
 def show_settings_window(parent=None, on_settings_changed=None):
     settings = load_settings()
     
     settings_window = tk.Toplevel(parent) if parent else tk.Tk()
     settings_window.title("Lexia Settings")
+    apply_window_icon(settings_window)
     settings_window.geometry("560x560")
     settings_window.minsize(560, 560)
     settings_window.resizable(True, True)
     settings_window.grid_rowconfigure(0, weight=1)
     settings_window.grid_columnconfigure(0, weight=1)
+    if parent:
+        settings_window.transient(parent)
+    settings_window.grab_set()
+    settings_window.focus_force()
     
     # Create notebook for tabs
     notebook = ttk.Notebook(settings_window)
@@ -67,7 +74,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
 
     tk.Label(model_frame, text="Default Model:").pack(side=tk.LEFT, padx=5)
     model_var = tk.StringVar(value=settings.get("model", ""))
-    model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
+    model_options = [("gpt-4", "GPT (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
     model_labels = ["Select model"] + [label for _, label in model_options]
     model_dropdown = ttk.Combobox(
         model_frame,
@@ -127,7 +134,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
         ).pack(pady=(0, 10))
     
     # OpenAI API Key
-    openai_frame = tk.LabelFrame(api_content, text="OpenAI (for GPT-4)", font=('Arial', 10, 'bold'), padx=10, pady=10)
+    openai_frame = tk.LabelFrame(api_content, text="OpenAI (for GPT)", font=('Arial', 10, 'bold'), padx=10, pady=10)
     openai_frame.pack(fill=tk.X, padx=20, pady=(0, 10))
     
     tk.Label(openai_frame, text="API Key:", font=('Arial', 9)).pack(anchor=tk.W)
@@ -196,7 +203,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
         groq_key = groq_var.get().strip()
         
         if not openai_key and not groq_key:
-            messagebox.showwarning("No API Keys", "Please enter at least one API key to test.")
+            messagebox.showwarning("No API Keys", "Please enter at least one API key to test.", parent=settings_window)
             return
         
         # Simple validation (you can enhance this)
@@ -213,7 +220,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
             else:
                 messages.append("⚠ Groq key format may be invalid")
         
-        messagebox.showinfo("API Key Test", "\n".join(messages))
+        messagebox.showinfo("API Key Test", "\n".join(messages), parent=settings_window)
     
     test_button = tk.Button(api_content, text="Test API Keys", command=test_api_keys, 
                            bg="#3498db", fg="white", font=('Arial', 9))
@@ -222,13 +229,17 @@ def show_settings_window(parent=None, on_settings_changed=None):
     # Buttons
     button_frame = tk.Frame(settings_window)
     button_frame.grid(row=1, column=0, pady=15, sticky="ew")
+    status_var = tk.StringVar(value="")
+    status_label = tk.Label(button_frame, textvariable=status_var, font=('Arial', 9), fg="gray")
+    status_label.pack(side=tk.RIGHT, padx=10)
     
     def save_and_close():
         if not keyring_available():
             messagebox.showerror(
                 "Credential Store Unavailable",
                 "Cannot save API keys because keyring support is missing.\n\n"
-                "Install dependency: pip install keyring"
+                "Install dependency: pip install keyring",
+                parent=settings_window
             )
             return
 
@@ -241,7 +252,8 @@ def show_settings_window(parent=None, on_settings_changed=None):
                                  "Please enter at least one API key to use Lexia.\n\n"
                                  "You can get API keys from:\n"
                                  "• OpenAI: https://platform.openai.com/api-keys\n"
-                                 "• Groq: https://console.groq.com/keys")
+                                 "• Groq: https://console.groq.com/keys",
+                                 parent=settings_window)
             return
 
         selected_model = next((value for value, label in model_options if label == model_dropdown.get()), "")
@@ -249,19 +261,22 @@ def show_settings_window(parent=None, on_settings_changed=None):
             if not selected_model:
                 messagebox.showwarning(
                     "Default Model Required",
-                    "Please select a default model after adding an API key."
+                    "Please select a default model after adding an API key.",
+                    parent=settings_window
                 )
                 return
             if selected_model == "gpt-4" and not openai_key:
                 messagebox.showwarning(
                     "Model Requires OpenAI Key",
-                    "GPT-4 is selected as default model, but no OpenAI API key is configured."
+                    "GPT is selected as default model, but no OpenAI API key is configured.",
+                    parent=settings_window
                 )
                 return
             if selected_model == "llama-4-scout" and not groq_key:
                 messagebox.showwarning(
                     "Model Requires Groq Key",
-                    "Llama-4-Scout is selected as default model, but no Groq API key is configured."
+                    "Llama-4-Scout is selected as default model, but no Groq API key is configured.",
+                    parent=settings_window
                 )
                 return
         
@@ -276,13 +291,34 @@ def show_settings_window(parent=None, on_settings_changed=None):
             "tray_notice_shown": settings.get("tray_notice_shown", False),
         }
         
-        if save_settings(new_settings):
-            messagebox.showinfo("Success", "Settings saved successfully!\n\nAPI keys are stored in your OS credential store.")
-            if on_settings_changed:
-                on_settings_changed(new_settings)
-            settings_window.destroy()
-        else:
-            messagebox.showerror("Error", "Failed to save settings")
+        save_button.config(state='disabled')
+        cancel_button.config(state='disabled')
+        test_button.config(state='disabled')
+        status_var.set("Saving...")
+
+        def worker():
+            ok = save_settings(new_settings)
+
+            def done():
+                status_var.set("")
+                save_button.config(state='normal')
+                cancel_button.config(state='normal')
+                test_button.config(state='normal')
+                if ok:
+                    messagebox.showinfo(
+                        "Success",
+                        "Settings saved successfully!\n\nAPI keys are stored in your OS credential store.",
+                        parent=settings_window
+                    )
+                    if on_settings_changed:
+                        on_settings_changed(new_settings)
+                    settings_window.destroy()
+                else:
+                    messagebox.showerror("Error", "Failed to save settings", parent=settings_window)
+
+            settings_window.after(0, done)
+
+        threading.Thread(target=worker, daemon=True).start()
     
     def cancel():
         settings_window.destroy()

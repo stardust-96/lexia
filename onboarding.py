@@ -9,6 +9,7 @@ from settings_store import (
     save_settings,
     validate_onboarding_state,
 )
+from app_paths import apply_window_icon
 
 
 def run_onboarding_wizard(parent=None):
@@ -20,6 +21,7 @@ def run_onboarding_wizard(parent=None):
 
     wizard = tk.Toplevel(parent) if parent else tk.Tk()
     wizard.title("Lexia Setup Wizard")
+    apply_window_icon(wizard)
     wizard.geometry("700x560")
     wizard.minsize(620, 500)
     wizard.resizable(True, True)
@@ -145,7 +147,7 @@ def run_onboarding_wizard(parent=None):
 
         rb_openai = tk.Radiobutton(
             model_box,
-            text="GPT-4 (OpenAI)",
+            text="GPT (OpenAI)",
             variable=model_var,
             value="gpt-4",
             state="normal" if openai_ok else "disabled",
@@ -177,7 +179,7 @@ def run_onboarding_wizard(parent=None):
             key_summary.append("Groq key: configured")
 
         if model_var.get() == "gpt-4":
-            model_name = "GPT-4 (OpenAI)"
+            model_name = "GPT (OpenAI)"
         elif model_var.get() == "llama-4-scout":
             model_name = "Llama-4-Scout (Groq)"
         else:

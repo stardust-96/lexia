@@ -10,6 +10,7 @@ from rewriter import rewrite_text_with_gpt
 from settings import show_settings_window, load_settings, get_api_keys
 from settings_store import is_onboarding_complete
 from version import VERSION_INFO, get_version_string
+from app_paths import apply_window_icon
 
 selected_tone = "Neutral"
 selected_alternative = 0
@@ -29,6 +30,7 @@ def show_about_dialog(parent):
     """Show the About dialog with application information."""
     about_window = tk.Toplevel(parent)
     about_window.title(f"About {APP_NAME}")
+    apply_window_icon(about_window)
     about_window.geometry("480x480")
     about_window.resizable(False, False)
     about_window.transient(parent)
@@ -278,6 +280,7 @@ def show_popup(original: str):
     # Create enhanced styled window
     popup = tk.Tk()
     popup.title("Lexia - Text Enhancement")
+    apply_window_icon(popup)
     popup.geometry("900x800")
     popup.resizable(False, False)
     popup.configure(bg="#f5f5f5")
@@ -315,7 +318,7 @@ def show_popup(original: str):
     
     settings = load_settings()
     if settings.get('model') == "gpt-4":
-        model_display = "GPT-4 (OpenAI)"
+        model_display = "GPT (OpenAI)"
     elif settings.get('model') == "llama-4-scout":
         model_display = "Llama-4-Scout (Groq)"
     else:
@@ -330,7 +333,7 @@ def show_popup(original: str):
     def update_model_settings(new_settings):
         # Update help menu with new settings
         if new_settings.get('model') == "gpt-4":
-            model_display = "GPT-4 (OpenAI)"
+            model_display = "GPT (OpenAI)"
         elif new_settings.get('model') == "llama-4-scout":
             model_display = "Llama-4-Scout (Groq)"
         else:
@@ -357,7 +360,7 @@ def show_popup(original: str):
     model_card.pack(side=tk.LEFT, padx=10, fill=tk.BOTH, expand=True)
     
     model_var = tk.StringVar(value=settings.get('model', ''))
-    model_options = [("gpt-4", "GPT-4 (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
+    model_options = [("gpt-4", "GPT (OpenAI)"), ("llama-4-scout", "Llama-4-Scout (Groq)")]
     keys = get_api_keys()
     openai_available = DEV_MODE or bool(keys.get("openai"))
     groq_available = DEV_MODE or bool(keys.get("groq"))
@@ -465,7 +468,7 @@ def show_popup(original: str):
         for child in model_card.winfo_children():
             if isinstance(child, tk.Radiobutton):
                 text = child.cget("text")
-                if "GPT-4" in text:
+                if "GPT" in text:
                     child.config(state='normal' if refreshed_openai else 'disabled')
                 elif "Llama-4-Scout" in text:
                     child.config(state='normal' if refreshed_groq else 'disabled')

@@ -30,7 +30,7 @@ python main.py
 ## ✨ Features
 
 ### 🤖 AI-Powered Rewriting
-- **Multiple AI Models**: GPT-4 (OpenAI) and Llama-4-Scout (Groq)
+- **Multiple AI Models**: GPT (OpenAI) and Llama-4-Scout (Groq)
 - **Alternative Suggestions**: Get 3 different rewrite variations for each text
 - **Real-time Processing**: Fast text rewriting with immediate results
 
@@ -100,7 +100,7 @@ python main.py
 
 Lexia's setup wizard will guide you, but here's where to get keys:
 
-#### **OpenAI API Key** (for GPT-4)
+#### **OpenAI API Key** (for GPT)
 1. Visit [OpenAI API Keys](https://platform.openai.com/api-keys)
 2. Create account or sign in
 3. Generate new API key
@@ -119,7 +119,7 @@ Lexia's setup wizard will guide you, but here's where to get keys:
 ### **🎯 Quick Start Guide**
 
 1. **🚀 Launch Lexia**
-   - **Executable**: Double-click `Lexia.exe`
+   - **Installed app**: Launch Lexia from Start Menu or desktop shortcut
    - **First-time**: Setup wizard opens automatically
    - **Returning users**: Runs in background
 
@@ -128,7 +128,7 @@ Lexia's setup wizard will guide you, but here's where to get keys:
 3. **⌨️ Press hotkey** (default: `Ctrl+Shift+R`)
 
 4. **🤖 Configure and rewrite**:
-   - Choose AI model (GPT-4 or Llama-4-Scout)
+   - Choose AI model (GPT or Llama-4-Scout)
    - Select preset style or enter custom instructions
    - Click "🔄 Rewrite" to generate alternatives
 
@@ -202,7 +202,7 @@ lexia/
 ## 🔧 Technical Details
 
 ### **AI Models**
-- **GPT-4** (OpenAI): Premium quality, excellent for complex rewrites
+- **GPT** (OpenAI): Premium quality, excellent for complex rewrites
 - **Llama-4-Scout** (Groq): Fast inference, cost-effective alternative
 
 ### **Architecture**
@@ -248,7 +248,7 @@ lexia/
    - Try creating a virtual environment
 
 5. **🎯 First-time setup issues**
-   - Restart Lexia.exe to re-trigger setup wizard
+   - Restart Lexia from Start Menu/desktop shortcut to re-trigger setup wizard
    - Manually open settings: **File → Settings → API Keys**
 
 6. **🛡️ Antivirus/Windows Defender warnings**
@@ -323,6 +323,8 @@ For production releases, publish locally signed Windows artifacts.
 4. Create GitHub Release and upload signed installer:
    - `dist\Lexia-Setup-<version>.exe`
 
+> Release policy: distribute the signed installer (`Lexia-Setup-<version>.exe`) as the user download artifact.
+
 > Note: CI workflow artifacts are unsigned unless signing is explicitly configured in CI.
 
 ## 🤝 Contributing
@@ -348,7 +350,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **OpenAI** for GPT-4 API and excellent documentation
+- **OpenAI** for GPT API and excellent documentation
 - **Groq** for Llama model hosting and fast inference
 - **Python Community** for amazing libraries (Tkinter, PyInstaller, etc.)
 - **GitHub** for free hosting and automated CI/CD
