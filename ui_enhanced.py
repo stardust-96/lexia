@@ -469,7 +469,7 @@ def show_popup(original: str):
         for child in model_card.winfo_children():
             if isinstance(child, tk.Radiobutton):
                 text = child.cget("text")
-                if "GPT" in text:
+                if "GPT (OpenAI)" in text:
                     child.config(state='normal' if refreshed_openai else 'disabled')
                 elif "Llama-4-Scout" in text:
                     child.config(state='normal' if refreshed_groq else 'disabled')

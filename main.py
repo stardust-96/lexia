@@ -221,7 +221,7 @@ if __name__ == "__main__":
 
         keys = get_api_keys()
         
-        hotkey = settings.get("hotkey", "ctrl+shift+r")
+        hotkey = settings.get("hotkey", "ctrl+alt+space")
         
         model_name = settings.get('model', '')
         if model_name == "gpt-4":

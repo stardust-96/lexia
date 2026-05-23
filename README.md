@@ -15,7 +15,7 @@ A powerful desktop application that provides intelligent text rewriting with cus
 4. Launch Lexia from Start Menu or Desktop shortcut
 5. **First-time setup wizard opens automatically**
 6. Enter your API keys in the GUI (no file editing!)
-7. Start rewriting with `Ctrl+Shift+R`!
+7. Start rewriting with `Ctrl+Alt+Space`!
 
 **✨ No Python installation, no config files, no technical setup required!**
 
@@ -46,7 +46,7 @@ python main.py
 - **🔧 First-Time Setup Wizard**: Automatic configuration on first launch
 - **⚙️ GUI-Based Settings**: Professional tabbed interface for all settings
 - **🔑 Secure API Key Management**: No config file editing required
-- **🌐 Global Hotkey**: Works across all applications (default: `Ctrl+Shift+R`)
+- **🌐 Global Hotkey**: Works across all applications (default: `Ctrl+Alt+Space`)
 - **⚡ Instant Access**: Select text anywhere and press hotkey
 - **🎨 Modern UI**: Clean interface with dynamic text sizing
 - **📋 One-Click Copy**: Copy and close with single button
@@ -125,7 +125,7 @@ Lexia's setup wizard will guide you, but here's where to get keys:
 
 2. **📝 Select text** anywhere (browser, Word, email, etc.)
 
-3. **⌨️ Press hotkey** (default: `Ctrl+Shift+R`)
+3. **⌨️ Press hotkey** (default: `Ctrl+Alt+Space`)
 
 4. **🤖 Configure and rewrite**:
    - Choose AI model (GPT or Llama-4-Scout)

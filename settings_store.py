@@ -12,7 +12,7 @@ KEYRING_SERVICE = "Lexia"
 DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 
 DEFAULT_SETTINGS = {
-    "hotkey": "ctrl+shift+r",
+    "hotkey": "ctrl+alt+space",
     "model": "",
     "temperature": 0.7,
     "num_alternatives": 3,
@@ -79,6 +79,13 @@ def _pick_first_available_model(openai_key, groq_key):
     return ""
 
 
+def normalize_hotkey(value):
+    if not value:
+        return DEFAULT_SETTINGS["hotkey"]
+    normalized = "".join(value.split()).lower()
+    return normalized or DEFAULT_SETTINGS["hotkey"]
+
+
 def _normalize_model(settings, openai_key, groq_key):
     model = settings.get("model", "")
     has_openai = bool(openai_key)
@@ -126,6 +133,7 @@ def is_onboarding_complete(settings=None):
 def save_settings(settings):
     try:
         settings_to_save = settings.copy()
+        settings_to_save["hotkey"] = normalize_hotkey(settings_to_save.get("hotkey", DEFAULT_SETTINGS["hotkey"]))
         openai_key = settings_to_save.pop("openai_api_key", None)
         groq_key = settings_to_save.pop("groq_api_key", None)
 
@@ -182,6 +190,7 @@ def load_settings():
             for key, value in DEFAULT_SETTINGS.items():
                 if key not in settings:
                     settings[key] = value
+            settings["hotkey"] = normalize_hotkey(settings.get("hotkey", DEFAULT_SETTINGS["hotkey"]))
 
             settings["openai_api_key"] = _get_key_from_keyring("openai_api_key")
             settings["groq_api_key"] = _get_key_from_keyring("groq_api_key")

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import webbrowser
 import threading
-from settings_store import DEV_MODE, get_api_keys, keyring_available, load_settings, save_settings
+from settings_store import DEV_MODE, get_api_keys, keyring_available, load_settings, save_settings, normalize_hotkey
 from app_paths import apply_window_icon
 
 def show_settings_window(parent=None, on_settings_changed=None):
@@ -281,7 +281,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
                 return
         
         new_settings = {
-            "hotkey": hotkey_var.get(),
+            "hotkey": normalize_hotkey(hotkey_var.get()),
             "model": selected_model,
             "temperature": temp_var.get(),
             "num_alternatives": alt_var.get(),
@@ -305,6 +305,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
                 cancel_button.config(state='normal')
                 test_button.config(state='normal')
                 if ok:
+                    settings_window.grab_release()
                     messagebox.showinfo(
                         "Success",
                         "Settings saved successfully.\n\n"

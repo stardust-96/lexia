@@ -8,6 +8,7 @@ from settings_store import (
     load_settings,
     save_settings,
     validate_onboarding_state,
+    normalize_hotkey,
 )
 from app_paths import apply_window_icon
 
@@ -79,6 +80,7 @@ def run_onboarding_wizard(parent=None):
     openai_var = tk.StringVar(value=settings.get("openai_api_key", ""))
     groq_var = tk.StringVar(value=settings.get("groq_api_key", ""))
     model_var = tk.StringVar(value=settings.get("model", ""))
+    hotkey_var = tk.StringVar(value=settings.get("hotkey", "ctrl+alt+space"))
 
     def clear_form():
         for child in form_frame.winfo_children():
@@ -169,6 +171,11 @@ def run_onboarding_wizard(parent=None):
             elif groq_ok:
                 model_var.set("llama-4-scout")
 
+        hotkey_box = tk.LabelFrame(form_frame, text="Shortcut", padx=10, pady=10)
+        hotkey_box.pack(fill=tk.X, pady=(10, 0))
+        tk.Label(hotkey_box, text="Rewrite hotkey (e.g., ctrl+alt+space):").pack(anchor=tk.W)
+        tk.Entry(hotkey_box, textvariable=hotkey_var).pack(fill=tk.X, pady=(4, 0))
+
     def render_review():
         title_label.config(text="Step 3: Review")
         keys = key_presence()
@@ -190,6 +197,7 @@ def run_onboarding_wizard(parent=None):
                 "Review your setup before finishing:\n\n"
                 + "\n".join(key_summary if key_summary else ["No keys configured"])
                 + f"\nDefault model: {model_name}"
+                + f"\nHotkey: {normalize_hotkey(hotkey_var.get())}"
             )
         )
 
@@ -215,7 +223,7 @@ def run_onboarding_wizard(parent=None):
             return
 
         payload = {
-            "hotkey": settings.get("hotkey", "ctrl+shift+r"),
+            "hotkey": normalize_hotkey(hotkey_var.get()),
             "model": model_var.get().strip(),
             "temperature": settings.get("temperature", 0.7),
             "num_alternatives": settings.get("num_alternatives", 3),

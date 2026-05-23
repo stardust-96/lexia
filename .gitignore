@@ -111,4 +111,7 @@ release/
 
 # Local automation scripts
 scripts/
+
+# Local release drafting notes
+RELEASE_NOTES*.md
 /settings.json
