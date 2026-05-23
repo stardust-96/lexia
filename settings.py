@@ -307,7 +307,9 @@ def show_settings_window(parent=None, on_settings_changed=None):
                 if ok:
                     messagebox.showinfo(
                         "Success",
-                        "Settings saved successfully!\n\nAPI keys are stored in your OS credential store.",
+                        "Settings saved successfully.\n\n"
+                        "API keys are stored in your OS credential store.\n"
+                        "Restart Lexia to apply hotkey changes.",
                         parent=settings_window
                     )
                     if on_settings_changed:

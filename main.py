@@ -85,12 +85,7 @@ def acquire_single_instance_lock():
 
 def show_settings(icon, item):
     """Show settings window from system tray"""
-    root = tk.Tk()
-    root.withdraw()
-    apply_window_icon(root)
-    win = show_settings_window(root)
-    root.wait_window(win)
-    root.destroy()
+    show_settings_window()
 
 def show_about(icon, item):
     """Show about dialog from system tray"""
@@ -98,7 +93,8 @@ def show_about(icon, item):
     root = tk.Tk()
     root.withdraw()
     apply_window_icon(root)
-    show_about_dialog(root)
+    about = show_about_dialog(root)
+    root.wait_window(about)
     root.destroy()
 
 def run_tray_icon():

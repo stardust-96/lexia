@@ -148,6 +148,7 @@ def show_about_dialog(parent):
     tk.Button(button_frame, text="Close", command=about_window.destroy,
              bg="#95a5a6", fg="white", font=("Arial", 10), 
              padx=35, pady=8, relief=tk.RAISED, bd=2).pack(pady=5)
+    return about_window
 
 def show_popup(original: str):
     def has_any_api_key():
