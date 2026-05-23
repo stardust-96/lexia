@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import webbrowser
+from PIL import Image, ImageTk
 
 from settings_store import (
     DEV_MODE,
@@ -10,7 +11,7 @@ from settings_store import (
     validate_onboarding_state,
     normalize_hotkey,
 )
-from app_paths import apply_window_icon
+from app_paths import apply_window_icon, get_icon_path
 
 
 def run_onboarding_wizard(parent=None):
@@ -37,6 +38,18 @@ def run_onboarding_wizard(parent=None):
 
     title_label = tk.Label(container, text="Welcome to Lexia", font=("Arial", 16, "bold"))
     title_label.grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+    icon_label = tk.Label(container)
+    icon_label.grid(row=0, column=0, sticky="e", pady=(0, 8))
+    try:
+        icon_path = get_icon_path()
+        if icon_path:
+            icon_img = Image.open(icon_path).resize((36, 36))
+            icon_photo = ImageTk.PhotoImage(icon_img)
+            icon_label.configure(image=icon_photo)
+            icon_label.image = icon_photo
+    except Exception:
+        pass
 
     body_label = tk.Label(container, text="", justify=tk.LEFT, wraplength=560, font=("Arial", 10))
     body_label.grid(row=1, column=0, sticky="ew")

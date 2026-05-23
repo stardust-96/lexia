@@ -21,10 +21,10 @@ import pystray
 import msvcrt
 from PIL import Image, ImageDraw
 from ui_enhanced import show_popup
-from settings import load_settings, get_api_keys, show_settings_window
+from settings import load_settings, get_api_keys, show_settings_window, register_runtime_settings_callback
 import tkinter as tk
 from tkinter import messagebox
-from settings_store import save_settings, is_onboarding_complete, clear_stored_api_keys
+from settings_store import save_settings, is_onboarding_complete, clear_stored_api_keys, normalize_hotkey
 from onboarding import run_onboarding_wizard
 from app_paths import get_icon_path, apply_window_icon
 
@@ -33,6 +33,9 @@ window_open = False
 tray_icon = None
 DEV_MODE = os.getenv("LEXIA_DEV_MODE", "0") == "1"
 instance_lock_handle = None
+hotkey_lock = threading.Lock()
+current_hotkey = None
+current_hotkey_handle = None
 
 
 def get_runtime_data_dir():
@@ -120,12 +123,45 @@ def run_tray_icon():
 
 
 def run_hotkey_listener(hotkey):
-    """Register and keep hotkey listener alive on a background thread."""
-    keyboard.add_hotkey(hotkey, handle_hotkey)
+    """Keep keyboard listener alive on a background thread."""
     try:
         keyboard.wait()
     except KeyboardInterrupt:
         pass
+
+
+def bind_hotkey(new_hotkey):
+    """Rebind global hotkey at runtime. Returns (ok, message)."""
+    global current_hotkey, current_hotkey_handle
+    normalized = normalize_hotkey(new_hotkey)
+    with hotkey_lock:
+        old_hotkey = current_hotkey
+        old_handle = current_hotkey_handle
+        try:
+            new_handle = keyboard.add_hotkey(normalized, handle_hotkey)
+        except Exception as e:
+            return False, f"Could not bind hotkey '{normalized}': {e}"
+
+        if old_handle is not None:
+            try:
+                keyboard.remove_hotkey(old_handle)
+            except Exception:
+                pass
+
+        current_hotkey = normalized
+        current_hotkey_handle = new_handle
+    return True, normalized
+
+
+def on_runtime_settings_changed(new_settings):
+    new_hotkey = normalize_hotkey(new_settings.get("hotkey"))
+    if new_hotkey == current_hotkey:
+        return
+    ok, info = bind_hotkey(new_hotkey)
+    if ok:
+        print(f"Hotkey updated to: {info.upper()}")
+    else:
+        print(info)
 
 def handle_hotkey():
     global last_hotkey_time, window_open
@@ -191,12 +227,14 @@ if __name__ == "__main__":
 
     try:
         settings = load_settings()
+        register_runtime_settings_callback(on_runtime_settings_changed)
 
         # Hard gate: onboarding must complete before app runs (except in dev mode).
         if not DEV_MODE and not is_onboarding_complete(settings):
             print("First-time setup required. Opening onboarding wizard...")
             setup_root = tk.Tk()
             setup_root.withdraw()
+            apply_window_icon(setup_root)
             completed = run_onboarding_wizard(setup_root)
             setup_root.destroy()
             if not completed:
@@ -221,7 +259,17 @@ if __name__ == "__main__":
 
         keys = get_api_keys()
         
-        hotkey = settings.get("hotkey", "ctrl+alt+space")
+        hotkey = normalize_hotkey(settings.get("hotkey", "ctrl+alt+space"))
+        ok, bind_info = bind_hotkey(hotkey)
+        if not ok:
+            print(bind_info)
+            hotkey = "ctrl+alt+space"
+            ok, bind_info = bind_hotkey(hotkey)
+            if not ok:
+                print(bind_info)
+                sys.exit(1)
+            settings["hotkey"] = hotkey
+            save_settings(settings)
         
         model_name = settings.get('model', '')
         if model_name == "gpt-4":

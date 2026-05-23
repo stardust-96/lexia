@@ -2,8 +2,17 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import webbrowser
 import threading
+import keyboard
 from settings_store import DEV_MODE, get_api_keys, keyring_available, load_settings, save_settings, normalize_hotkey
 from app_paths import apply_window_icon
+
+_runtime_settings_callbacks = []
+
+
+def register_runtime_settings_callback(callback):
+    if callback and callback not in _runtime_settings_callbacks:
+        _runtime_settings_callbacks.append(callback)
+
 
 def show_settings_window(parent=None, on_settings_changed=None):
     settings = load_settings()
@@ -64,6 +73,44 @@ def show_settings_window(parent=None, on_settings_changed=None):
     hotkey_var = tk.StringVar(value=settings["hotkey"])
     hotkey_entry = tk.Entry(hotkey_frame, textvariable=hotkey_var, width=20)
     hotkey_entry.pack(side=tk.LEFT, padx=5)
+    hotkey_status_var = tk.StringVar(value="")
+    hotkey_status_label = tk.Label(general_frame, textvariable=hotkey_status_var, font=('Arial', 9), fg="gray")
+    hotkey_status_label.pack(pady=(2, 6))
+
+    def validate_hotkey(value):
+        normalized = normalize_hotkey(value)
+        if not normalized:
+            return False, "Hotkey cannot be empty."
+        try:
+            keyboard.parse_hotkey(normalized)
+        except Exception:
+            return False, "Invalid hotkey format. Example: ctrl+alt+space"
+
+        # Best-effort registration test to catch obvious binding failures.
+        test_handle = None
+        try:
+            test_handle = keyboard.add_hotkey(normalized, lambda: None)
+        except Exception as e:
+            return False, f"Could not register hotkey: {e}"
+        finally:
+            if test_handle is not None:
+                try:
+                    keyboard.remove_hotkey(test_handle)
+                except Exception:
+                    pass
+        return True, normalized
+
+    def refresh_hotkey_status(*_):
+        ok, msg = validate_hotkey(hotkey_var.get())
+        if ok:
+            hotkey_status_var.set(f"Hotkey format OK: {msg}")
+            hotkey_status_label.config(fg="#2e7d32")
+        else:
+            hotkey_status_var.set(msg)
+            hotkey_status_label.config(fg="#b00020")
+
+    hotkey_var.trace_add("write", refresh_hotkey_status)
+    refresh_hotkey_status()
     
     # Model Section
     tk.Label(general_frame, text="Model Settings", font=('Arial', 12, 'bold')).pack(pady=(20, 5))
@@ -243,6 +290,11 @@ def show_settings_window(parent=None, on_settings_changed=None):
             )
             return
 
+        hotkey_ok, hotkey_msg = validate_hotkey(hotkey_var.get())
+        if not hotkey_ok:
+            messagebox.showwarning("Invalid Hotkey", hotkey_msg, parent=settings_window)
+            return
+
         # Validate that at least one API key is provided (except in dev mode)
         openai_key = openai_var.get().strip()
         groq_key = groq_var.get().strip()
@@ -281,7 +333,7 @@ def show_settings_window(parent=None, on_settings_changed=None):
                 return
         
         new_settings = {
-            "hotkey": normalize_hotkey(hotkey_var.get()),
+            "hotkey": hotkey_msg,
             "model": selected_model,
             "temperature": temp_var.get(),
             "num_alternatives": alt_var.get(),
@@ -315,6 +367,11 @@ def show_settings_window(parent=None, on_settings_changed=None):
                     )
                     if on_settings_changed:
                         on_settings_changed(new_settings)
+                    for callback in _runtime_settings_callbacks:
+                        try:
+                            callback(new_settings)
+                        except Exception:
+                            pass
                     settings_window.destroy()
                 else:
                     messagebox.showerror("Error", "Failed to save settings", parent=settings_window)

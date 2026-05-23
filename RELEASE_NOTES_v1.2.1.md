@@ -1,5 +1,7 @@
 ## 🎉 Lexia Release v1.2.1
 
+<img src="https://raw.githubusercontent.com/stardust-96/lexia/main/lexia.ico" width="64" />
+
 ### ✨ What's New
 - **Installer-First Distribution** - Signed `Lexia-Setup-1.2.1.exe` is now the recommended download
 - **OS Credential Store for API Keys** - Keys are stored via system credential manager (no plaintext/base64 settings storage)

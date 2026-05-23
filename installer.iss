@@ -28,6 +28,8 @@ ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SetupIconFile=lexia.ico
 LicenseFile=LICENSE
+WizardImageFile=installer_wizard.bmp
+WizardSmallImageFile=installer_wizard_small.bmp
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
