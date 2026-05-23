@@ -108,3 +108,6 @@ dist/
 release/
 *.zip
 *.exe
+
+# Local automation scripts
+scripts/
