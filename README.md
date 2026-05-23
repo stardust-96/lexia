@@ -10,12 +10,13 @@ A powerful desktop application that provides intelligent text rewriting with cus
 
 ### **🎯 Super Easy Installation (Recommended)**
 1. Go to [Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. Download `Lexia-v1.2.0-Windows.zip`
-3. Extract to any folder
-4. Run `Lexia.exe`
-5. **First-time setup wizard opens automatically**
-6. Enter your API keys in the GUI (no file editing!)
-7. Start rewriting with `Ctrl+Shift+R`!
+2. Download the **signed** `Lexia.exe` asset from the latest release
+3. (Optional) Also download the zip package if you prefer bundled docs
+4. If you downloaded zip, extract it to any folder
+5. Run `Lexia.exe`
+6. **First-time setup wizard opens automatically**
+7. Enter your API keys in the GUI (no file editing!)
+8. Start rewriting with `Ctrl+Shift+R`!
 
 **✨ No Python installation, no config files, no technical setup required!**
 
@@ -64,7 +65,7 @@ python main.py
 
 ### **🎯 Windows Executable (Recommended - Super Easy!)**
 1. **Download** the latest release from [GitHub Releases](https://github.com/stardust-96/lexia/releases/latest)
-2. **Extract** `Lexia-v1.2.0-Windows.zip` to any folder
+2. **Download** the signed `Lexia.exe` release asset
 3. **Run** `Lexia.exe`
 4. **🎨 First-time setup opens automatically**
 5. **Enter your API keys** in the professional GUI interface
@@ -129,7 +130,7 @@ Lexia's setup wizard will guide you, but here's where to get keys:
 4. **🤖 Configure and rewrite**:
    - Choose AI model (GPT-4 or Llama-4-Scout)
    - Select preset style or enter custom instructions
-   - Click "🔄 Rewrite" to generate 3 alternatives
+   - Click "🔄 Rewrite" to generate alternatives
 
 5. **✨ Select and copy** your preferred version
 
