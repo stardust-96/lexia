@@ -1,7 +1,7 @@
 ; Inno Setup script for Lexia
 
 #define MyAppName "Lexia"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.2.1"
 #define MyAppPublisher "Muhammad Jawad Bashir"
 #define MyAppURL "https://github.com/stardust-96/lexia"
 #define MyAppExeName "Lexia.exe"
@@ -50,4 +50,3 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C taskkill /f /im {#MyAppExeName}"; Flags: runhidden
-
